@@ -36,6 +36,13 @@ export interface Disponibilidad {
   disponible: boolean;
 }
 
+/** Imagen del carrusel de fotos de una habitación. */
+export interface ImagenHabitacion {
+  habitacionId: string;
+  url: string;
+  alt: string;
+}
+
 /** Reserva de una habitación realizada por un usuario. */
 export interface Reserva {
   id: string;

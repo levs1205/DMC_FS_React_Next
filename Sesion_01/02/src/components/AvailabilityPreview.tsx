@@ -8,7 +8,8 @@
 // recibe props ya calculadas y las muestra. Toda la lógica vive en
 // utils/businessLogic.ts y en la página que lo usa (pages/BookingPage.tsx).
 
-import type { Habitacion } from '../utils/types';
+import type { Habitacion, ImagenHabitacion } from '../utils/types';
+import { RoomImageCarousel } from './RoomImageCarousel';
 import './AvailabilityPreview.css';
 
 export interface AvailabilityPreviewProps {
@@ -16,6 +17,8 @@ export interface AvailabilityPreviewProps {
   noches: number;
   precioTotal: number;
   disponible: boolean;
+  imagenes: ImagenHabitacion[];
+  cargandoImagenes?: boolean;
 }
 
 export function AvailabilityPreview({
@@ -23,9 +26,15 @@ export function AvailabilityPreview({
   noches,
   precioTotal,
   disponible,
+  imagenes,
+  cargandoImagenes,
 }: AvailabilityPreviewProps) {
   return (
     <article className={`availability-preview ${disponible ? 'is-available' : 'is-unavailable'}`}>
+      <div className="availability-preview__media">
+        <RoomImageCarousel imagenes={imagenes} cargando={cargandoImagenes} />
+      </div>
+
       <header className="availability-preview__header">
         <h3>{habitacion.nombre}</h3>
         <span className="availability-preview__badge">

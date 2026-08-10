@@ -3,7 +3,7 @@
 // Representan lo que normalmente vendría de un backend / base de datos.
 // ============================================================================
 
-import type { Disponibilidad, Habitacion } from '../utils/types';
+import type { Disponibilidad, Habitacion, ImagenHabitacion } from '../utils/types';
 
 export const habitacionesMock: Habitacion[] = [
   {
@@ -57,4 +57,22 @@ export const disponibilidadMock: Disponibilidad[] = [
   ...generarDisponibilidad('hab-101', 14, [2, 3, 8]),
   ...generarDisponibilidad('hab-202', 14, [0, 5, 6, 7]),
   ...generarDisponibilidad('hab-303', 14, []),
+];
+
+/**
+ * Genera las rutas mockeadas de las fotos de una habitación.
+ * Ruta simulada: `src/services/img/{habitacionId}/{n}.jpg`.
+ */
+function generarImagenes(habitacionId: string, cantidad: number): ImagenHabitacion[] {
+  return Array.from({ length: cantidad }, (_, indice) => ({
+    habitacionId,
+    url: `src/services/img/${habitacionId}/0${indice + 1}.jpg`,
+    alt: `Foto ${indice + 1} de la habitación ${habitacionId}`,
+  }));
+}
+
+export const imagenesHabitacionMock: ImagenHabitacion[] = [
+  ...generarImagenes('hab-101', 3),
+  ...generarImagenes('hab-202', 3),
+  ...generarImagenes('hab-303', 4),
 ];

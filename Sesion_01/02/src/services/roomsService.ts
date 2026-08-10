@@ -5,10 +5,10 @@
 // artificial. En una clase futura, estas funciones podrían reemplazarse por
 // llamadas `fetch`/`axios` reales sin tener que tocar los componentes.
 
-import type { Disponibilidad, Habitacion } from '../utils/types';
-import { disponibilidadMock, habitacionesMock } from './mockData';
+import type { Disponibilidad, Habitacion, ImagenHabitacion } from '../utils/types';
+import { disponibilidadMock, habitacionesMock, imagenesHabitacionMock } from './mockData';
 
-const RETARDO_SIMULADO_MS = 400;
+const RETARDO_SIMULADO_MS = 0;
 
 function simularRespuesta<T>(datos: T): Promise<T> {
   return new Promise((resolve) => {
@@ -25,4 +25,10 @@ export async function obtenerHabitaciones(): Promise<Habitacion[]> {
 export async function obtenerDisponibilidad(habitacionId: string): Promise<Disponibilidad[]> {
   const disponibilidad = disponibilidadMock.filter((dia) => dia.habitacionId === habitacionId);
   return simularRespuesta(disponibilidad);
+}
+
+/** Simula: GET /habitaciones/:id/imagenes */
+export async function obtenerImagenesHabitacion(habitacionId: string): Promise<ImagenHabitacion[]> {
+  const imagenes = imagenesHabitacionMock.filter((imagen) => imagen.habitacionId === habitacionId);
+  return simularRespuesta(imagenes);
 }

@@ -51,7 +51,20 @@ export function useAvailability(): UseAvailabilityResult {
     }
   }, []);
 
-  const cargarImagenes = useCallback(async (habitacionId: string) => {
+  // const cargarImagenes = useCallback(async (habitacionId: string) => {
+  //   setCargandoImagenes(true);
+  //   setErrorImagenes(null);
+  //   try {
+  //     const datos = await obtenerImagenesHabitacion(habitacionId);
+  //     setImagenes(datos);
+  //   } catch {
+  //     setErrorImagenes('No se pudo cargar la galería de imágenes de la habitación.');
+  //   } finally {
+  //     setCargandoImagenes(false);
+  //   }
+  // }, []);
+
+    const cargarImagenes = async (habitacionId: string) => {
     setCargandoImagenes(true);
     setErrorImagenes(null);
     try {
@@ -62,7 +75,7 @@ export function useAvailability(): UseAvailabilityResult {
     } finally {
       setCargandoImagenes(false);
     }
-  }, []);
+  };
 
   return {
     habitaciones,

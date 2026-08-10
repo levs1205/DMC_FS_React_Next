@@ -1,0 +1,61 @@
+.room-image-carousel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #e5e7eb;
+}
+
+.room-image-carousel__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.room-image-carousel--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.room-image-carousel__control {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: rgba(17, 24, 39, 0.5);
+  color: #fff;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.room-image-carousel__control:hover {
+  background: rgba(17, 24, 39, 0.75);
+}
+
+.room-image-carousel__control--prev {
+  left: 0.5rem;
+}
+
+.room-image-carousel__control--next {
+  right: 0.5rem;
+}
+
+.room-image-carousel__counter {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.5);
+  color: #fff;
+  font-size: 0.7rem;
+}

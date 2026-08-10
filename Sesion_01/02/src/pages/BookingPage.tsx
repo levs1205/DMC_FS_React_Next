@@ -30,7 +30,16 @@ const usuarioActual: Usuario = {
 };
 
 export function BookingPage() {
-  const { habitaciones, disponibilidad, cargando, error, cargarDisponibilidad } = useAvailability();
+  const {
+    habitaciones,
+    disponibilidad,
+    imagenes,
+    cargando,
+    cargandoImagenes,
+    error,
+    cargarDisponibilidad,
+    cargarImagenesHabitacion,
+  } = useAvailability();
 
   const [habitacionId, setHabitacionId] = useState('');
   const [fechaInicio, setFechaInicio] = useState('');
@@ -56,6 +65,7 @@ export function BookingPage() {
     setReservaConfirmada(null);
     if (id) {
       cargarDisponibilidad(id);
+      cargarImagenesHabitacion(id);
     }
   }
 
@@ -138,6 +148,8 @@ export function BookingPage() {
             noches={noches}
             precioTotal={precioTotal}
             disponible={disponible}
+            imagenes={imagenes}
+            cargandoImagenes={cargandoImagenes}
           />
 
           <button
