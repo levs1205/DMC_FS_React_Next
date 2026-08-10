@@ -27,9 +27,18 @@ export async function obtenerDisponibilidad(habitacionId: string): Promise<Dispo
   return simularRespuesta(disponibilidad);
 }
 
+// Tipo explícito de `import.meta.glob` para no depender de que el editor resuelva
+// la ampliación de tipos de Vite sobre `ImportMeta` (evita los falsos positivos de tipado).
+type ImportGlobEager = (
+  patron: string,
+  opciones: { eager: true; query: string; import: string },
+) => Record<string, string>;
+
 // Mapa `ruta -> URL` de todas las imágenes bajo src/services/img/{habitacionId},
 // resuelto en tiempo de build por Vite (simula un CDN/almacenamiento de imágenes).
-const modulosImagenesHabitaciones = import.meta.glob<string>('./img/*/*.{jpg,jpeg,png,webp}', {
+const modulosImagenesHabitaciones = (
+  (import.meta as unknown as { glob: ImportGlobEager }).glob
+)('./img/*/*.{jpg,jpeg,png,webp}', {
   eager: true,
   query: '?url',
   import: 'default',
