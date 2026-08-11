@@ -10,26 +10,28 @@
 //   3. Ver la vista previa de disponibilidad y precio.
 //   4. Confirmar la reserva (simulada).
 
-import { useMemo, useState } from 'react';
-import { AvailabilityPreview } from '../components/AvailabilityPreview';
-import { useAvailability } from '../hooks/useAvailability';
+import { useMemo, useState } from "react";
+import { AvailabilityPreview } from "../components/AvailabilityPreview";
+import { useAvailability } from "../hooks/useAvailability";
 import {
   calcularNochesEstadia,
   calcularPrecioTotal,
   esRangoDeFechasValido,
   verificarDisponibilidadEnRango,
-} from '../utils/businessLogic';
-import type { Reserva, Usuario } from '../utils/types';
-import './BookingPage.css';
+} from "../utils/businessLogic";
+import type { Reserva, Usuario } from "../utils/types";
+import { useAuth } from "../store/AuthContext";
+import "./BookingPage.css";
 
 // Usuario "logueado" simulado para esta clase (todavía sin autenticación real).
-const usuarioActual: Usuario = {
-  id: 'user-01',
-  nombre: 'Estudiante Invitado',
-  email: 'estudiante@dmc.pe',
-};
+// const usuarioActual: Usuario = {
+//   id: "user-01",
+//   nombre: "Estudiante Invitado",
+//   email: "estudiante@dmc.pe",
+// };
 
 export function BookingPage() {
+  const { usuario } = useAuth();
   const {
     habitaciones,
     disponibilidad,
@@ -41,18 +43,27 @@ export function BookingPage() {
     cargarImagenes,
   } = useAvailability();
 
-  const [habitacionId, setHabitacionId] = useState('');
-  const [fechaInicio, setFechaInicio] = useState('');
-  const [fechaFin, setFechaFin] = useState('');
-  const [reservaConfirmada, setReservaConfirmada] = useState<Reserva | null>(null);
+  const [habitacionId, setHabitacionId] = useState("");
+  const [fechaInicio, setFechaInicio] = useState("");
+  const [fechaFin, setFechaFin] = useState("");
+  const [reservaConfirmada, setReservaConfirmada] = useState<Reserva | null>(
+    null,
+  );
 
-  const habitacionSeleccionada = habitaciones.find((h) => h.id === habitacionId);
+  const habitacionSeleccionada = habitaciones.find(
+    (h) => h.id === habitacionId,
+  );
   const fechasValidas = useMemo(
-    () => Boolean(fechaInicio && fechaFin && esRangoDeFechasValido(fechaInicio, fechaFin)),
+    () =>
+      Boolean(
+        fechaInicio && fechaFin && esRangoDeFechasValido(fechaInicio, fechaFin),
+      ),
     [fechaInicio, fechaFin],
   );
 
-  const noches = fechasValidas ? calcularNochesEstadia(fechaInicio, fechaFin) : 0;
+  const noches = fechasValidas
+    ? calcularNochesEstadia(fechaInicio, fechaFin)
+    : 0;
   const precioTotal = habitacionSeleccionada
     ? calcularPrecioTotal(habitacionSeleccionada.precioPorNoche, noches)
     : 0;
@@ -69,7 +80,10 @@ export function BookingPage() {
     }
   }
 
-  function handleCambiarFechas(nuevaFechaInicio: string, nuevaFechaFin: string) {
+  function handleCambiarFechas(
+    nuevaFechaInicio: string,
+    nuevaFechaFin: string,
+  ) {
     setFechaInicio(nuevaFechaInicio);
     setFechaFin(nuevaFechaFin);
     setReservaConfirmada(null);
@@ -81,21 +95,35 @@ export function BookingPage() {
     const nuevaReserva: Reserva = {
       id: `res-${Date.now()}`,
       habitacionId: habitacionSeleccionada.id,
-      usuarioId: usuarioActual.id,
+      usuarioId: usuario.id,
       fechaInicio,
       fechaFin,
-      estado: 'confirmada',
+      estado: "confirmada",
       precioTotal,
     };
 
     setReservaConfirmada(nuevaReserva);
   }
 
+  if (!usuario) return null;
+
   return (
     <section className="booking-page">
       <header className="booking-page__header">
-        <h1>Reserva de habitaciones</h1>
-        <p>Elige una habitación y un rango de fechas para ver su disponibilidad.</p>
+        <div>
+          <h1>Reserva de habitaciones</h1>
+          <p>
+            Elige una habitación y un rango de fechas para ver su
+            disponibilidad.
+          </p>
+        </div>
+        <div className="booking-page__user">
+          <span>{usuario.nombre}</span>
+          <br />
+          <button type="button" className="booking-page__logout">
+            Cerrar sesión
+          </button>
+        </div>
       </header>
 
       <form className="booking-page__form" onSubmit={(e) => e.preventDefault()}>
@@ -134,9 +162,15 @@ export function BookingPage() {
       </form>
 
       {cargando && <p className="booking-page__status">Cargando...</p>}
-      {error && <p className="booking-page__status booking-page__status--error">{error}</p>}
+      {error && (
+        <p className="booking-page__status booking-page__status--error">
+          {error}
+        </p>
+      )}
       {errorImagenes && (
-        <p className="booking-page__status booking-page__status--error">{errorImagenes}</p>
+        <p className="booking-page__status booking-page__status--error">
+          {errorImagenes}
+        </p>
       )}
       {fechaInicio && fechaFin && !fechasValidas && (
         <p className="booking-page__status booking-page__status--error">
@@ -167,7 +201,8 @@ export function BookingPage() {
 
       {reservaConfirmada && (
         <p className="booking-page__status booking-page__status--success">
-          ¡Reserva {reservaConfirmada.id} confirmada para {usuarioActual.nombre}!
+          ¡Reserva {reservaConfirmada.id} confirmada para {usuario.nombre}
+          !
         </p>
       )}
     </section>

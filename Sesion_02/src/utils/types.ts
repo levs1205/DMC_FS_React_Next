@@ -18,6 +18,12 @@ export interface Usuario {
   email: string;
 }
 
+/** Usuario mockeado junto a su contraseña, usado solo en la capa de autenticación simulada. */
+export interface UsuarioConCredenciales {
+  usuario: Usuario;
+  password: string;
+}
+
 /** Catálogo de servicio: una habitación disponible para reservar. */
 export interface Habitacion {
   id: string;
