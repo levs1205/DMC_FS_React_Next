@@ -1,0 +1,126 @@
+.admin-bookings-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+  text-align: left;
+}
+
+.admin-bookings-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.admin-bookings-page__header h1 {
+  font-size: 1.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.admin-bookings-page__header p {
+  color: #6b7280;
+  margin-top: 0;
+}
+
+.admin-bookings-page__user {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.admin-bookings-page__logout {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-bookings-page__logout:hover {
+  background: #f3f4f6;
+}
+
+.admin-bookings-page__status {
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 0.9rem;
+  margin-top: 1.5rem;
+}
+
+.admin-bookings-page__status--error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.admin-bookings-page__table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.admin-bookings-page__table th,
+.admin-bookings-page__table td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.admin-bookings-page__table th {
+  color: #6b7280;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.admin-bookings-page__badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.admin-bookings-page__badge.is-pendiente {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.admin-bookings-page__badge.is-confirmada {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.admin-bookings-page__badge.is-cancelada {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.admin-bookings-page__cancel {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 8px;
+  background: #dc2626;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-bookings-page__cancel:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.admin-bookings-page__cancel:disabled {
+  background: #c7c7d1;
+  cursor: not-allowed;
+}

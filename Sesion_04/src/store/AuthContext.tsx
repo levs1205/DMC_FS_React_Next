@@ -7,46 +7,64 @@
 
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import {
+  iniciarSesion as iniciarSesionService,
+  restablecerPassword as restablecerPasswordService,
+  solicitarCodigoMFA as solicitarCodigoMFAService,
+} from '../services/authService';
 import type { Usuario } from '../utils/types';
 
 interface AuthContextValue {
   usuario: Usuario | null;
-  iniciarSesion: (email: string, password: string) => boolean;
-  obtenerUsuario: () => Promise<Usuario | null>;
+  cargando: boolean;
+  iniciarSesion: (email: string, password: string) => Promise<Usuario | null>;
+  cerrarSesion: () => void;
+  solicitarCodigoMFA: (email: string) => Promise<string | null>;
+  restablecerPassword: (email: string, codigoMFA: string, nuevaPassword: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [cargando, setCargando] = useState(false);
 
-  const iniciarSesion = useCallback((email: string, password: string) => {
-
+  const iniciarSesion = useCallback(async (email: string, password: string) => {
+    setCargando(true);
     try {
-      let usuarioEncontrado: Usuario;
-      usuarioEncontrado = {
-        id: '1',
-        nombre: 'Luis',
-        email: 'lvs@gmail.com',
-      };
-
+      const usuarioEncontrado = await iniciarSesionService(email, password);
       setUsuario(usuarioEncontrado);
-      return usuarioEncontrado !== null;
+      return usuarioEncontrado;
     } finally {
+      setCargando(false);
     }
   }, []);
 
-  const obtenerUsuario = useCallback(async () => {
-    return usuario;
-  }, [usuario]);
+  const cerrarSesion = useCallback(() => {
+    setUsuario(null);
+  }, []);
+
+  const solicitarCodigoMFA = useCallback(async (email: string) => {
+    return solicitarCodigoMFAService(email);
+  }, []);
+
+  const restablecerPassword = useCallback(
+    async (email: string, codigoMFA: string, nuevaPassword: string) => {
+      return restablecerPasswordService(email, codigoMFA, nuevaPassword);
+    },
+    [],
+  );
 
   const value = useMemo<AuthContextValue>(
     () => ({
       usuario,
+      cargando,
       iniciarSesion,
-      obtenerUsuario,
+      cerrarSesion,
+      solicitarCodigoMFA,
+      restablecerPassword,
     }),
-    [usuario, iniciarSesion, obtenerUsuario],
+    [usuario, cargando, iniciarSesion, cerrarSesion, solicitarCodigoMFA, restablecerPassword],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

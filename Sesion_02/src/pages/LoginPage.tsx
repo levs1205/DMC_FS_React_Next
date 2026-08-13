@@ -5,27 +5,26 @@ import { useAuth } from "../store/AuthContext";
 import type { SubmitEvent } from "react";
 
 export function LoginPage() {
-  const { iniciarSesion, obtenerUsuario } = useAuth();
+  const { iniciarSesion, usuario } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  async function handleSubmit(evento: SubmitEvent) {
+  function handleSubmit(evento: SubmitEvent) {
     evento.preventDefault();
     setError(null);
 
-    const exito = await iniciarSesion(email, password);
+    const exito = iniciarSesion(email, password);
     if (exito) {
       console.log("Inicio de sesión exitoso");
-      const usuario = await obtenerUsuario();
-      console.log("Usuario:", usuario);
+
       navigate("/booking", { replace: true });
     } else {
       setError("Correo o contraseña incorrectos.");
     }
   }
-
+  console.log("Usuario:", usuario);
   return (
     <section className="login-page">
       <form className="login-page__form" onSubmit={handleSubmit}>
