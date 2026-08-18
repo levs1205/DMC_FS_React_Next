@@ -1,8 +1,4 @@
-/**
- * Ruta estática: "/login"
- * Renderizado: Server Component (por defecto) -> Static Rendering (SSG),
- * ya que no depende de datos dinámicos ni tiene "use client".
- */
+
 import Link from "next/link";
 import "./page.css";
 
