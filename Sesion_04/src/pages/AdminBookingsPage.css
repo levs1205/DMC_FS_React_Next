@@ -106,6 +106,17 @@
   color: #991b1b;
 }
 
+.admin-bookings-page__badge.is-reprogramada {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.admin-bookings-page__acciones {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .admin-bookings-page__cancel {
   padding: 0.4rem 0.8rem;
   border: none;
@@ -123,4 +134,75 @@
 .admin-bookings-page__cancel:disabled {
   background: #c7c7d1;
   cursor: not-allowed;
+}
+
+.admin-bookings-page__edit {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-bookings-page__edit:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.admin-bookings-page__edit:disabled {
+  background: #c7c7d1;
+  cursor: not-allowed;
+}
+
+.admin-bookings-page__save {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 8px;
+  background: #16a34a;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-bookings-page__save:hover:not(:disabled) {
+  background: #15803d;
+}
+
+.admin-bookings-page__save:disabled {
+  background: #c7c7d1;
+  cursor: not-allowed;
+}
+
+.admin-bookings-page__descartar {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-bookings-page__descartar:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.admin-bookings-page__descartar:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.admin-bookings-page__date-input {
+  padding: 0.3rem 0.4rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.admin-bookings-page__error-row td {
+  padding: 0.4rem 0.75rem;
+  color: #991b1b;
+  background: #fef2f2;
+  font-size: 0.8rem;
 }

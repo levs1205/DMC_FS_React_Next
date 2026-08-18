@@ -19,10 +19,11 @@ import { obtenerHabitaciones } from '../services/roomsService';
 import { useAuth } from '../store/AuthContext';
 import type { Habitacion, Reserva, Usuario } from '../utils/types';
 import './AdminBookingsPage.css';
+import ReservaEditableRow from '../components/ReservaEditableRow';
 
 export function AdminBookingsPage() {
   const { usuario, cerrarSesion } = useAuth();
-  const { reservas, cargando, error, cancelandoId, cancelar } = useReservas();
+  const { reservas, cargando, error, cancelandoId, cancelar, reprogramandoId, reprogramar } = useReservas();
 
   const [habitaciones, setHabitaciones] = useState<Habitacion[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
@@ -89,30 +90,20 @@ export function AdminBookingsPage() {
             {reservas.map((reserva) => (
               // key={reserva.id}: identifica la fila por su id real, no por su
               // posición en el arreglo. Es lo que le permite a React actualizar
-              // solo esta fila al cancelar, sin perder el estado de las demás.
-              <tr key={reserva.id}>
-                <td>{reserva.id}</td>
-                <td>{obtenerNombreHabitacion(reserva.habitacionId)}</td>
-                <td>{obtenerNombreUsuario(reserva.usuarioId)}</td>
-                <td>{reserva.fechaInicio}</td>
-                <td>{reserva.fechaFin}</td>
-                <td>${reserva.precioTotal}</td>
-                <td>
-                  <span className={`admin-bookings-page__badge is-${reserva.estado}`}>
-                    {reserva.estado}
-                  </span>
-                </td>
-                <td>
-                  <button
-                    type="button"
-                    className="admin-bookings-page__cancel"
-                    disabled={reserva.estado === 'cancelada' || cancelandoId === reserva.id}
-                    onClick={() => setReservaACancelar(reserva)}
-                  >
-                    {cancelandoId === reserva.id ? 'Cancelando...' : 'Cancelar'}
-                  </button>
-                </td>
-              </tr>
+              // solo esta fila al cancelar o reprogramar, sin perder el estado
+              // (por ejemplo, el modo de edición) de las demás filas.
+              <ReservaEditableRow
+                key={reserva.id}
+                reserva={reserva}
+                nombreHabitacion={obtenerNombreHabitacion(reserva.habitacionId)}
+                nombreUsuario={obtenerNombreUsuario(reserva.usuarioId)}
+                cancelando={cancelandoId === reserva.id}
+                reprogramando={reprogramandoId === reserva.id}
+                onCancelar={() => setReservaACancelar(reserva)}
+                onGuardarReprogramacion={(nuevaFechaInicio, nuevaFechaFin) =>
+                  reprogramar(reserva.id, nuevaFechaInicio, nuevaFechaFin)
+                }
+              />
             ))}
           </tbody>
         </table>

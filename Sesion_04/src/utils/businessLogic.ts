@@ -77,3 +77,24 @@ export function verificarDisponibilidadEnRango(
 
   return diasEnRango.every((dia) => dia.disponible);
 }
+
+
+/**
+ * Valida una reprogramación de reserva: la nueva fecha de entrada debe ser
+ * posterior a la fecha de entrada original, y el nuevo rango debe seguir
+ * siendo un rango de fechas válido (salida posterior a la nueva entrada).
+ */
+export function esReprogramacionValida(
+  fechaInicioOriginal: string,
+  nuevaFechaInicio: string,
+  nuevaFechaFin: string,
+): boolean {
+  if (!esRangoDeFechasValido(nuevaFechaInicio, nuevaFechaFin)) {
+    return false;
+  }
+
+  const original = new Date(fechaInicioOriginal);
+  const nuevaInicio = new Date(nuevaFechaInicio);
+
+  return nuevaInicio.getTime() > original.getTime();
+}

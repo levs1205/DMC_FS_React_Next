@@ -5,9 +5,9 @@
 // "services/reservasService") y expone un estado tipado listo para usar en
 // AdminBookingsPage.
 
-import { useCallback, useEffect, useState } from 'react';
-import { cancelarReserva, obtenerReservas } from '../services/reservasService';
-import type { Reserva } from '../utils/types';
+import { useCallback, useEffect, useState } from "react";
+import { cancelarReserva, obtenerReservas, reprogramarReserva } from "../services/reservasService";
+import type { Reserva } from "../utils/types";
 
 interface UseReservasResult {
   reservas: Reserva[];
@@ -15,6 +15,12 @@ interface UseReservasResult {
   error: string | null;
   cancelandoId: string | null;
   cancelar: (id: string) => Promise<void>;
+  reprogramandoId: string | null;
+  reprogramar: (
+    id: string,
+    fechaInicio: string,
+    fechaFin: string,
+  ) => Promise<void>;
 }
 
 export function useReservas(): UseReservasResult {
@@ -22,6 +28,7 @@ export function useReservas(): UseReservasResult {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cancelandoId, setCancelandoId] = useState<string | null>(null);
+  const [reprogramandoId, setReprogramandoId] = useState<string | null>(null);
 
   const cargarReservas = useCallback(async () => {
     setCargando(true);
@@ -30,7 +37,7 @@ export function useReservas(): UseReservasResult {
       const datos = await obtenerReservas();
       setReservas(datos);
     } catch {
-      setError('No se pudo cargar el listado de reservas.');
+      setError("No se pudo cargar el listado de reservas.");
     } finally {
       setCargando(false);
     }
@@ -46,7 +53,7 @@ export function useReservas(): UseReservasResult {
       await cancelarReserva(id);
       setReservas((actuales) =>
         actuales.map((reserva) =>
-          reserva.id === id ? { ...reserva, estado: 'cancelada' } : reserva,
+          reserva.id === id ? { ...reserva, estado: "cancelada" } : reserva,
         ),
       );
     } finally {
@@ -54,5 +61,24 @@ export function useReservas(): UseReservasResult {
     }
   }, []);
 
-  return { reservas, cargando, error, cancelandoId, cancelar };
+  const reprogramar = useCallback(
+    async (id: string, fechaInicio: string, fechaFin: string) => {
+      setReprogramandoId(id);
+      try {
+        await reprogramarReserva(id, fechaInicio, fechaFin);
+        setReservas((actuales) =>
+          actuales.map((reserva) =>
+            reserva.id === id
+              ? { ...reserva, fechaInicio, fechaFin, estado: "reprogramada" }
+              : reserva,
+          ),
+        );
+      } finally {
+        setReprogramandoId(null);
+      }
+    },
+    [],
+  );
+
+  return { reservas, cargando, error, cancelandoId, cancelar, reprogramandoId, reprogramar };
 }

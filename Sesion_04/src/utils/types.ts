@@ -9,7 +9,7 @@
 export type TipoHabitacion = 'individual' | 'doble' | 'suite';
 
 /** Estados posibles del ciclo de vida de una reserva. */
-export type EstadoReserva = 'pendiente' | 'confirmada' | 'cancelada';
+export type EstadoReserva = 'pendiente' | 'confirmada' | 'cancelada' | 'reprogramada';
 
 /** Rol del usuario dentro del sistema: define qué páginas puede visitar. */
 export type RolUsuario = 'admin' | 'cliente';

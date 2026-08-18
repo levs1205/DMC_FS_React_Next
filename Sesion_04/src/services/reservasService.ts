@@ -7,8 +7,8 @@
 // (reservasMock), toda reserva creada aparece de inmediato en el listado del
 // administrador.
 
-import type { Reserva } from '../utils/types';
-import { reservasMock } from './reservasMockData';
+import type { Reserva } from "../utils/types";
+import { reservasMock } from "./reservasMockData";
 
 const RETARDO_SIMULADO_MS = 400;
 
@@ -36,6 +36,23 @@ export async function cancelarReserva(id: string): Promise<Reserva | null> {
     return simularRespuesta(null);
   }
 
-  reserva.estado = 'cancelada';
+  reserva.estado = "cancelada";
+  return simularRespuesta(reserva);
+}
+
+/** Simula: PATCH /reservas/:id/reprogramar */
+export async function reprogramarReserva(
+  id: string,
+  fechaInicio: string,
+  fechaFin: string,
+): Promise<Reserva | null> {
+  const reserva = reservasMock.find((r) => r.id === id);
+  if (!reserva) {
+    return simularRespuesta(null);
+  }
+
+  reserva.fechaInicio = fechaInicio;
+  reserva.fechaFin = fechaFin;
+  reserva.estado = "reprogramada";
   return simularRespuesta(reserva);
 }
