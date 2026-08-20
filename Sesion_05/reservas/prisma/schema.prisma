@@ -1,0 +1,17 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+model User {
+  id       Int     @id @default(autoincrement())
+  name     String?
+  login    String?
+  password String?
+
+  @@map("user")
+}

@@ -1,8 +1,8 @@
 export interface UserRecord {
   id: number;
-  name: string;
-  login: string;
-  password: string;
+  name: string | null;
+  login: string | null;
+  password: string | null;
 }
 
 export type UserPublic = Omit<UserRecord, "password">;
