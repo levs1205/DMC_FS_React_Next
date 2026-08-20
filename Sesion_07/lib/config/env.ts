@@ -1,3 +1,5 @@
+import { buildDatabaseUrl } from "@/lib/config/build-database-url";
+
 function getEnvVar(name: string, fallback?: string): string {
   const value = process.env[name] ?? fallback;
 
@@ -15,3 +17,5 @@ export const dbConfig = {
   password: getEnvVar("DB_PASSWORD"),
   database: getEnvVar("DB_NAME"),
 };
+
+export const databaseUrl = buildDatabaseUrl(dbConfig);

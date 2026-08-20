@@ -1,0 +1,18 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Entidad de la tabla public.user (misma forma que el UserRecord de dominio).
+model User {
+  id       Int     @id @default(autoincrement())
+  name     String?
+  login    String?
+  password String?
+
+  @@map("user")
+}
