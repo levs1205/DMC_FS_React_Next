@@ -1,46 +1,47 @@
+/**
+ * Ruta: "/login"
+ * Client Component: envía las credenciales a POST /api/user/login,
+ * redirige a "/intranet" si son válidas o muestra el error debajo del formulario.
+ */
 "use client";
 
 import Link from "next/link";
-import "./page.css";
-import { useState, type SubmitEvent } from "react";
 import { useRouter } from "next/navigation";
-
+import { useState, type SubmitEvent } from "react";
+import "./page.css";
 
 function Login() {
+  const router = useRouter();
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function handleSubmit(e: SubmitEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setIsLoading(true);
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
     setError(null);
+    setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/user/login",{
+      const response = await fetch("/api/user/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user, password }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || "Error al iniciar sesión");
-        setIsLoading(false);
+        setError(data.message ?? "No se pudo iniciar sesión.");
         return;
       }
 
       router.push("/intranet");
-
-    } catch (error) {
-      setError("Error al iniciar sesión");
-    } 
-
+    } catch {
+      setError("No se pudo conectar con el servidor.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -55,7 +56,7 @@ function Login() {
             autoComplete="username"
             required
             value={user}
-            onChange={(e) => setUser(e.target.value)}
+            onChange={(event) => setUser(event.target.value)}
           />
         </label>
 
@@ -66,7 +67,7 @@ function Login() {
             autoComplete="current-password"
             required
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(event) => setPassword(event.target.value)}
           />
         </label>
 
@@ -74,11 +75,19 @@ function Login() {
           ¿Olvidaste tu contraseña?
         </Link>
 
-        <button type="submit" className="login-page__submit" disabled={isLoading}>
-          {isLoading ? "..Ingresando.." : "Ingresar"}
+        <button
+          type="submit"
+          className="login-page__submit"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? "Ingresando..." : "Ingresar"}
         </button>
 
-        {error && <p className="login-page__status login-page__status--error">{error}</p>}
+        {error && (
+          <p className="login-page__status login-page__status--error">
+            {error}
+          </p>
+        )}
 
         <p className="login-page__hint">Demo: estudiante@dmc.pe / 1234</p>
       </form>
