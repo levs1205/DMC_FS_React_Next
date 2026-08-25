@@ -3,7 +3,7 @@
  * Ruta: "/login-server"
  * Server Component puro (sin JavaScript de cliente): el formulario envía un
  * Server Action ("./actions") que reutiliza userService.login directamente
- * (misma lógica que la API route, sin HTTP) y redirige a "/intranet" o de
+ * (misma lógica que la API route, sin HTTP) y redirige a "/backoffice" o de
  * vuelta a esta página con el error como query param.
  */
 import Link from "next/link";

@@ -10,7 +10,7 @@ export async function loginAction(formData: FormData): Promise<void> {
   const user = String(formData.get("user") ?? "");
   const password = String(formData.get("password") ?? "");
 
-  let redirectTo = "/intranet";
+  let redirectTo = "/backoffice";
 
   try {
     await userService.login({ user, password });

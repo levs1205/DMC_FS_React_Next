@@ -1,7 +1,7 @@
 /**
  * Ruta: "/login"
  * Client Component: envía las credenciales a POST /api/user/login,
- * redirige a "/intranet" si son válidas o muestra el error debajo del formulario.
+ * redirige a "/backoffice" si son válidas o muestra el error debajo del formulario.
  */
 "use client";
 
@@ -36,7 +36,7 @@ function Login() {
         return;
       }
 
-      router.push("/intranet");
+      router.push("/backoffice");
     } catch {
       setError("No se pudo conectar con el servidor.");
     } finally {
