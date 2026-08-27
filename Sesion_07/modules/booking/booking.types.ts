@@ -15,4 +15,6 @@ export interface BookingListItem {
   totalPrice: number;
 }
 
-
+export interface UpdateBookingStatusInput {
+  status: BookingStatus;
+}

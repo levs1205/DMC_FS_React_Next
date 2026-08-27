@@ -26,25 +26,25 @@ enum BookingStatus {
 
 // Entidad de la tabla public.user (misma forma que el UserRecord de dominio).
 model User {
-  id       Int       @id @default(autoincrement())
+  id       Int     @id @default(autoincrement())
   name     String?
   login    String?
   password String?
-  
+
   bookings Booking[]
 
   @@map("user")
 }
 
 model Room {
-  id            Int       @id @default(autoincrement())
-  name          String    @db.VarChar(255)
-  typeR         RoomType
+  id            Int      @id @default(autoincrement())
+  name          String   @db.VarChar(255)
+  type          RoomType
   capacity      Int
-  pricePerNight Decimal   @map("price_per_night") @db.Decimal(10, 2)
-  description   String?   @db.VarChar(255)
+  pricePerNight Decimal  @map("price_per_night") @db.Decimal(10, 2)
+  description   String?  @db.VarChar(255)
 
-  bookings      Booking[]
+  bookings Booking[]
 
   @@map("room")
 }
@@ -61,7 +61,6 @@ model Booking {
   user User @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   room Room @relation(fields: [roomId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-
 
   @@index([userId], name: "booking_user_id_foreign")
   @@index([roomId], name: "booking_room_id_foreign")

@@ -8,7 +8,7 @@ CREATE TYPE "booking_status" AS ENUM ('PENDING', 'CONFIRMED', 'CANCELLED', 'RESC
 CREATE TABLE "room" (
     "id" SERIAL NOT NULL,
     "name" VARCHAR(255) NOT NULL,
-    "typeR" "room_type" NOT NULL,
+    "type" "room_type" NOT NULL,
     "capacity" INTEGER NOT NULL,
     "price_per_night" DECIMAL(10,2) NOT NULL,
     "description" VARCHAR(255),

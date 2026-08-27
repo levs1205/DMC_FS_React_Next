@@ -10,7 +10,7 @@ const bookingLIstSelect = {
   endDate: true,
   status: true,
   totalPrice: true,
-  room: { select: { name: true, typeR: true } },
+  room: { select: { name: true, type: true } },
   user: { select: { name: true, login: true } },
 } satisfies Prisma.BookingSelect;
 
@@ -26,11 +26,21 @@ export const bookingRepository = {
     });
   },
 
-  async findAll(): Promise<BookingRelations[]>{
+  async findAll(): Promise<BookingRelations[]> {
     return prisma.booking.findMany({
-        select: bookingLIstSelect,
-        orderBy: [{startDate: "asc"}, {id : "asc"}]
-    })
-  }
+      select: bookingLIstSelect,
+      orderBy: [{ startDate: "asc" }, { id: "asc" }],
+    });
+  },
 
+  async updateStatus(
+    id: number,
+    status: BookingStatus,
+  ): Promise<BookingRelations> {
+    return prisma.booking.update({
+      where: { id },
+      data: { status },
+      select: bookingLIstSelect,
+    });
+  },
 };

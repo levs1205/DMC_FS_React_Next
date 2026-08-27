@@ -12,7 +12,7 @@ TRUNCATE TABLE "booking", "room" RESTART IDENTITY CASCADE;
 -- ---------------------------------------------------------------------------
 -- Habitaciones
 -- ---------------------------------------------------------------------------
-INSERT INTO "room" ("name", "typeR", "capacity", "price_per_night", "description")
+INSERT INTO "room" ("name", "type", "capacity", "price_per_night", "description")
 VALUES
   ('Habitación 101',      'SINGLE', 1, 120.00, 'Individual con vista interior, cama queen y escritorio.'),
   ('Habitación 102',      'SINGLE', 1, 130.00, 'Individual con vista a la calle y balcón pequeño.'),
