@@ -6,6 +6,10 @@ export const userRepository = {
     return prisma.user.findMany({ orderBy: { id: "asc" } });
   },
 
+  async findById(id: number): Promise<UserRecord | null> {
+    return prisma.user.findUnique({ where: { id } });
+  },
+
   async findByLogin(login: string): Promise<UserRecord | null> {
     return prisma.user.findFirst({ where: { login } });
   },

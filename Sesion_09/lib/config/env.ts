@@ -19,3 +19,10 @@ export const dbConfig = {
 };
 
 export const databaseUrl = buildDatabaseUrl(dbConfig);
+
+// Secretos con los que se firman los JWT de sesión. No tienen fallback a
+// propósito: si faltan, la app no arranca en vez de firmar con algo predecible.
+export const authConfig = {
+  accessTokenSecret: getEnvVar("JWT_ACCESS_SECRET"),
+  refreshTokenSecret: getEnvVar("JWT_REFRESH_SECRET"),
+};

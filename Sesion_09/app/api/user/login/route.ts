@@ -2,9 +2,18 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ApiError } from "@/lib/http/api-error";
 import { handleRouteError } from "@/lib/http/handle-route-error";
 import { validateBody } from "@/lib/http/validate-body";
+import { homePathForRole } from "@/modules/auth/auth.config";
+import { applySessionCookies } from "@/modules/auth/auth.cookies";
+import { authService } from "@/modules/auth/auth.service";
 import { loginSchema } from "@/modules/users/user.schemas";
-import { userService } from "@/modules/users/user.service";
 
+/**
+ * POST /api/user/login
+ * Body: { "user": "correo@dominio", "password": "..." }
+ *
+ * Responde con el usuario y la ruta que le toca según su rol. Los tokens no
+ * aparecen en el cuerpo: se adjuntan como cookies HttpOnly.
+ */
 export async function POST(request: NextRequest) {
   try {
     let body: unknown;
@@ -15,9 +24,14 @@ export async function POST(request: NextRequest) {
     }
 
     const credentials = validateBody(loginSchema, body);
-    const user = await userService.login(credentials);
+    const { user, tokens } = await authService.login(credentials);
 
-    return NextResponse.json(user);
+    const response = NextResponse.json({
+      user,
+      redirectTo: homePathForRole(user.role),
+    });
+
+    return applySessionCookies(response, tokens);
   } catch (error) {
     return handleRouteError(error);
   }

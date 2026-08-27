@@ -5,8 +5,10 @@
  */
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import "./page.css";
+import { apiFetch } from "@/lib/http/api-client";
 import { formatCurrency } from "@/lib/format/format-currency";
 import { formatIsoDate } from "@/lib/format/format-date";
 import {
@@ -16,6 +18,7 @@ import {
 import type { BookingListItem } from "@/modules/bookings/booking.types";
 
 function Backoffice() {
+  const router = useRouter();
   const [bookings, setBookings] = useState<BookingListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,10 +33,16 @@ function Backoffice() {
 
     async function loadBookings() {
       try {
-        const response = await fetch("/api/booking");
+        const response = await apiFetch("/api/booking");
         const data = await response.json();
 
         if (!isActive) return;
+
+        // 401 = ni el access token ni el refresh siguen vivos: sesión terminada.
+        if (response.status === 401) {
+          router.push("/login");
+          return;
+        }
 
         if (!response.ok) {
           setError(data.message ?? "No se pudieron cargar las reservas.");
@@ -53,7 +62,7 @@ function Backoffice() {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [router]);
 
   // <dialog> se abre/cierra de forma imperativa: showModal() es lo que activa
   // el backdrop nativo, el foco atrapado y el cierre con la tecla Escape.
@@ -81,13 +90,18 @@ function Backoffice() {
     setNotice(null);
 
     try {
-      const response = await fetch(`/api/booking/${bookingToCancel.id}`, {
+      const response = await apiFetch(`/api/booking/${bookingToCancel.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "CANCELLED" }),
       });
 
       const data = await response.json();
+
+      if (response.status === 401) {
+        router.push("/login");
+        return;
+      }
 
       if (!response.ok) {
         setError(data.message ?? "No se pudo cancelar la reserva.");

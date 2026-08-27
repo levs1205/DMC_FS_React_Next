@@ -1,9 +1,12 @@
+import type { UserRole } from "@/modules/auth/auth.types";
+
 // Fila cruda de la tabla public.user.
 export interface UserRecord {
   id: number;
   name: string | null;
   login: string | null;
   password: string | null;
+  role: UserRole;
 }
 
 // Datos de usuario seguros para exponer por la API (sin password).

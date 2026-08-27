@@ -26,16 +26,44 @@ enum BookingStatus {
   @@map("booking_status")
 }
 
+// Rol de la persona que inicia sesión: decide a qué zona de la app entra.
+enum UserRole {
+  STUDENT
+  ADMIN
+
+  @@map("user_role")
+}
+
 // Entidad de la tabla public.user (misma forma que el UserRecord de dominio).
 model User {
-  id       Int     @id @default(autoincrement())
-  name     String? @db.VarChar
-  login    String? @db.VarChar
-  password String? @db.VarChar
+  id       Int      @id @default(autoincrement())
+  name     String?  @db.VarChar
+  login    String?  @db.VarChar
+  password String?  @db.VarChar
+  role     UserRole @default(STUDENT)
 
-  bookings Booking[]
+  bookings      Booking[]
+  refreshTokens RefreshToken[]
 
   @@map("user")
+}
+
+// Refresh tokens vivos de cada usuario (sesiones abiertas).
+// Se guarda solo el SHA-256 del token, nunca el token en claro: quien lea la
+// tabla no puede reutilizarlo. Tener la fila permite revocar (logout, robo)
+// algo que un JWT suelto —por ser stateless— no permitiría.
+model RefreshToken {
+  id        Int       @id @default(autoincrement())
+  tokenHash String    @unique @map("token_hash") @db.Char(64)
+  userId    Int       @map("user_id")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([userId])
+  @@map("refresh_token")
 }
 
 // Entidad de la tabla public.room (dominio: Habitacion).

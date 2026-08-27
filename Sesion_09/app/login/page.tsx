@@ -1,7 +1,9 @@
 /**
  * Ruta: "/login"
- * Client Component: envía las credenciales a POST /api/user/login,
- * redirige a "/backoffice" si son válidas o muestra el error debajo del formulario.
+ * Client Component: envía las credenciales a POST /api/user/login. Si son
+ * válidas, la respuesta trae la ruta que le toca al rol ("/backoffice" para
+ * admin, "/intranet" para estudiante) y los tokens llegan como cookies
+ * HttpOnly; si no, muestra el error debajo del formulario.
  */
 "use client";
 
@@ -36,7 +38,11 @@ function Login() {
         return;
       }
 
-      router.push("/backoffice");
+      // El servidor decide el destino según el rol; el cliente no lo adivina.
+      router.push(data.redirectTo);
+      // Refresca el árbol de Server Components para que el header muestre
+      // de inmediato al usuario recién logueado.
+      router.refresh();
     } catch {
       setError("No se pudo conectar con el servidor.");
     } finally {
@@ -89,7 +95,10 @@ function Login() {
           </p>
         )}
 
-        <p className="login-page__hint">Demo: estudiante@dmc.pe / 1234</p>
+        <p className="login-page__hint">
+          Demo: estudiante@dmc.pe / 1234 (intranet) &middot; admin@dmc.pe /
+          admin123 (reservas)
+        </p>
       </form>
     </section>
   );
