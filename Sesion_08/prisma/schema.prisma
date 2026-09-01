@@ -26,16 +26,39 @@ enum BookingStatus {
   @@map("booking_status")
 }
 
+enum UserRole {
+  ADMIN
+  STUDENT
+
+  @@map("user_role")
+}
+
 // Entidad de la tabla public.user (misma forma que el UserRecord de dominio).
 model User {
   id       Int     @id @default(autoincrement())
   name     String? @db.VarChar
   login    String? @db.VarChar
   password String? @db.VarChar
+  role     UserRole @default(STUDENT)
 
   bookings Booking[]
+  refreshTokens RefreshToken[]
 
   @@map("user")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  tokenHash String   @unique @map("token_hash") @db.VarChar(255)
+  userId    Int      @map("user_id")
+  expiresAt DateTime @map("expires_at") @db.Timestamp(6)
+  createdAt DateTime @map("created_at") @db.Timestamp(6) @default(now())
+  revokeAt  DateTime? @map("revoked_at") @db.Timestamp(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([userId])
+  @@map("refresh_token")
 }
 
 // Entidad de la tabla public.room (dominio: Habitacion).
