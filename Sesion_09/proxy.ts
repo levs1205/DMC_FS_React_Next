@@ -1,11 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
   ACCESS_TOKEN_COOKIE,
+  HOME_PATH,
   LOGIN_PATH,
   REFRESH_PATH,
   REFRESH_TOKEN_COOKIE,
   findRouteRule,
-  homePathForRole,
 } from "@/modules/auth/auth.config";
 import { verifyAccessToken } from "@/modules/auth/auth.tokens";
 
@@ -18,13 +18,16 @@ import { verifyAccessToken } from "@/modules/auth/auth.tokens";
  * prefetch del router. La autorización de verdad vive en los layouts de cada
  * zona y en los route handlers (`requireRole` / `requireApiSession`).
  *
+ * Como el rol ya no viaja dentro del token, acá solo se distingue "hay sesión"
+ * de "no hay sesión": el filtro por rol lo hace `requireRole` en el layout de
+ * cada zona, que sí puede leer el rol de la base y devuelve al usuario a la
+ * zona que le corresponde.
+ *
  * Reglas:
  * 1. Sin sesión pero con refresh token → renovación silenciosa y vuelta a la
  *    misma URL, para que la sesión no se corte cada 15 minutos.
  * 2. Sin sesión en una zona privada → al login.
- * 3. Con sesión en /login → a la zona que le toca por rol.
- * 4. Con sesión pero rol equivocado → de vuelta a su propia zona
- *    (el estudiante no ve el backoffice de reservas; el admin no ve la intranet).
+ * 3. Con sesión en /login → a la portada (de ahí cada zona se encarga).
  */
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
@@ -54,14 +57,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const homePath = homePathForRole(session.role);
-
   if (isLoginPage) {
-    return NextResponse.redirect(new URL(homePath, request.nextUrl));
-  }
-
-  if (rule && !rule.roles.includes(session.role)) {
-    return NextResponse.redirect(new URL(homePath, request.nextUrl));
+    return NextResponse.redirect(new URL(HOME_PATH, request.nextUrl));
   }
 
   return NextResponse.next();

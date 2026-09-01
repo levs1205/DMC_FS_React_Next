@@ -11,15 +11,23 @@ export function isUserRole(value: unknown): value is UserRole {
 }
 
 /**
- * Identidad que viaja dentro del access token y que la app usa para decidir
- * qué puede ver cada persona. Es deliberadamente mínima: id, rol y nombre
- * para saludar. Nada sensible (password, correo, teléfono) entra al JWT,
- * porque el payload de un JWT va firmado pero NO cifrado: cualquiera que lo
- * tenga puede leerlo.
+ * Identidad que viaja firmada dentro del access token: solo quién es la
+ * persona (id) y su nombre para saludar. Nada sensible (password, correo,
+ * teléfono) entra al JWT, porque el payload va firmado pero NO cifrado:
+ * cualquiera que lo tenga puede leerlo.
+ *
+ * El ROL tampoco viaja acá a propósito: es un permiso, no una identidad, y
+ * un token vive 15 minutos. Si el rol viajara dentro, un cambio de permisos
+ * recién se aplicaría cuando el token caduque; leyéndolo de la base con el
+ * id se aplica en la siguiente request.
  */
-export interface SessionUser {
+export interface SessionIdentity {
   id: number;
   name: string | null;
+}
+
+// Identidad del token + el rol vigente leído de la base de datos.
+export interface SessionUser extends SessionIdentity {
   role: UserRole;
 }
 

@@ -25,6 +25,7 @@ export const JWT_ISSUER = "hotel-reservas";
 export const JWT_AUDIENCE = "hotel-reservas-web";
 
 export const LOGIN_PATH = "/login";
+export const HOME_PATH = "/";
 export const REFRESH_PATH = "/api/auth/refresh";
 
 // A dónde cae cada rol apenas inicia sesión (y a dónde se lo devuelve si

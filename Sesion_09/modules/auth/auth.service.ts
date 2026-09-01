@@ -16,7 +16,9 @@ import type { LoginCredentials, PublicUser } from "@/modules/users/user.types";
  *
  * - El access token es stateless: se valida solo con la firma, sin tocar la BD.
  *   Por eso dura poco (15 min): es la única ventana en la que un token robado
- *   o un rol ya cambiado siguen siendo válidos.
+ *   sigue siendo válido. Solo lleva identidad; el rol se consulta a la base en
+ *   cada request (ver `requireApiSession`), así un cambio de permisos no queda
+ *   esperando a que el token caduque.
  * - El refresh token sí queda registrado en la tabla `refresh_token`, guardando
  *   únicamente su SHA-256. Eso permite lo que un JWT suelto no permite:
  *   revocarlo (logout) y detectar su reutilización.
@@ -78,9 +80,7 @@ export const authService = {
    * Renueva el access token a partir del refresh token.
    *
    * Comprueba, en este orden: firma y vencimiento del JWT, que el token siga
-   * registrado, que no esté revocado y que el usuario siga existiendo. El rol
-   * se vuelve a leer de la base, así un cambio de rol se aplica como máximo
-   * en el siguiente refresh y no cuando caduque la sesión entera.
+   * registrado, que no esté revocado y que el usuario siga existiendo.
    */
   async refresh(rawRefreshToken: string): Promise<AuthenticatedSession> {
     const payload = await verifyRefreshToken(rawRefreshToken);

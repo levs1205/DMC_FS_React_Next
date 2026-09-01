@@ -1,4 +1,5 @@
 import { ApiError } from "@/lib/http/api-error";
+import type { UserRole } from "@/modules/auth/auth.types";
 import { userRepository } from "@/modules/users/user.repository";
 import type {
   LoginCredentials,
@@ -24,6 +25,15 @@ export const userService = {
   async findById(id: number): Promise<PublicUser | null> {
     const record = await userRepository.findById(id);
     return record ? toPublicUser(record) : null;
+  },
+
+  /**
+   * Rol vigente del usuario, leído de la base a partir de su id. Las guardias
+   * de sesión lo usan para autorizar: el rol ya no viaja dentro del access
+   * token. Devuelve null si el usuario ya no existe.
+   */
+  async findRoleById(id: number): Promise<UserRole | null> {
+    return userRepository.findRoleById(id);
   },
 
   /**

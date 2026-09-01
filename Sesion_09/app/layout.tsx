@@ -10,7 +10,7 @@ import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { logoutAction } from "@/modules/auth/auth.actions";
-import { getSession } from "@/modules/auth/auth.session";
+import { getSessionUser } from "@/modules/auth/auth.session";
 import { USER_ROLE_LABELS } from "@/modules/users/user.labels";
 
 const geistSans = Geist({
@@ -31,7 +31,9 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   // Al leer la cookie de sesión el layout pasa a renderizarse por request:
   // es lo que permite mostrar quién está conectado en todas las páginas.
-  const session = await getSession();
+  // Se usa `getSessionUser` porque el header muestra el rol, y el rol vive en
+  // la base de datos, no en el token.
+  const session = await getSessionUser();
 
   return (
     <html

@@ -6,7 +6,7 @@ import {
   JWT_ISSUER,
   REFRESH_TOKEN_TTL_SECONDS,
 } from "@/modules/auth/auth.config";
-import { isUserRole, type SessionUser } from "@/modules/auth/auth.types";
+import type { SessionIdentity } from "@/modules/auth/auth.types";
 
 /**
  * Firma y verificación de los JWT con `jose` (la librería que recomienda la
@@ -29,12 +29,14 @@ function toUnixSeconds(date: Date): number {
   return Math.floor(date.getTime() / 1000);
 }
 
-export async function signAccessToken(user: SessionUser): Promise<string> {
+// El token solo lleva identidad (sub + nombre). El rol se consulta a la base
+// cuando hace falta autorizar, así un cambio de permisos no queda esperando a
+// que venza el token.
+export async function signAccessToken(user: SessionIdentity): Promise<string> {
   const expiresAt = new Date(Date.now() + ACCESS_TOKEN_TTL_SECONDS * 1000);
 
   return new SignJWT({
     tokenType: ACCESS_TOKEN_TYPE,
-    role: user.role,
     name: user.name,
   })
     .setProtectedHeader({ alg: ALGORITHM })
@@ -50,7 +52,7 @@ export async function signAccessToken(user: SessionUser): Promise<string> {
 // manipulado: para quien llama, "no hay sesión" y "el token no sirve" es lo mismo.
 export async function verifyAccessToken(
   token: string
-): Promise<SessionUser | null> {
+): Promise<SessionIdentity | null> {
   try {
     const { payload } = await jwtVerify(token, accessKey, {
       algorithms: [ALGORITHM],
@@ -60,17 +62,12 @@ export async function verifyAccessToken(
 
     const id = Number(payload.sub);
 
-    if (
-      payload.tokenType !== ACCESS_TOKEN_TYPE ||
-      !Number.isInteger(id) ||
-      !isUserRole(payload.role)
-    ) {
+    if (payload.tokenType !== ACCESS_TOKEN_TYPE || !Number.isInteger(id)) {
       return null;
     }
 
     return {
       id,
-      role: payload.role,
       name: typeof payload.name === "string" ? payload.name : null,
     };
   } catch {
