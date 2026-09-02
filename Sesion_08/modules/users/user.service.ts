@@ -5,6 +5,7 @@ import type {
   PublicUser,
   UserRecord,
 } from "@/modules/users/user.types";
+import { UserRole } from "../auth/auth.types";
 
 function toPublicUser(record: UserRecord): PublicUser {
   return { id: record.id, name: record.name, login: record.login };
@@ -29,4 +30,8 @@ export const userService = {
 
     return toPublicUser(record);
   },
+
+  async findRoleById(id:number): Promise<UserRole | null>{
+    return userRepository.findRoleById(id);
+  }
 };
