@@ -78,20 +78,134 @@ body {
   flex-direction: column;
 }
 
-.home-page {
-  flex: 1;
+.site-nav__list {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 1.5rem;
+  gap: 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.site-nav__list a {
+  color: #374151;
+  text-decoration: none;
+}
+
+.site-nav__list a:hover {
+  color: #111827;
+  text-decoration: underline;
+}
+
+.site-footer {
+  padding: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  background: #ffffff;
+  font-size: 0.85rem;
+  color: #6b7280;
   text-align: center;
 }
 
-.home-page__title {
+.site-footer__address {
+  margin: 0 0 0.35rem;
+  font-style: normal;
+}
+
+.site-footer a {
+  color: #4b5563;
+}
+
+.site-footer__legal {
   margin: 0;
-  font-size: 1.5rem;
+}
+
+.home {
+  width: 100%;
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+
+.home__hero {
+  max-width: 40rem;
+}
+
+.home__title {
+  margin: 0 0 1rem;
+  font-size: 2.125rem;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.home__lead {
+  margin: 0 0 1.75rem;
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: #4b5563;
+}
+
+.home__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.25rem;
+  margin: 0;
+}
+
+.home__cta {
+  padding: 0.65rem 1.35rem;
+  border-radius: 8px;
+  background: #111827;
+  color: #ffffff;
   font-weight: 600;
-  max-width: 32rem;
+  text-decoration: none;
+}
+
+.home__cta:hover {
+  background: #1f2937;
+}
+
+.home__link {
+  color: #4b5563;
+}
+
+.home__highlights {
+  margin-top: 3.5rem;
+}
+
+.home__subtitle {
+  margin: 0 0 1.25rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.home__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home__list li {
+  padding: 1.25rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.home__list h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.home__list p {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.6;
 }
 
 .intranet {
@@ -115,4 +229,9 @@ body {
   margin: 0;
   max-width: 32rem;
   color: #4b5563;
+}
+
+.site-nav {
+  margin-right: auto;
+  margin-left: 1.5rem;
 }

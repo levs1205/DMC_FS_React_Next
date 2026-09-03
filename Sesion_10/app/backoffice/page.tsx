@@ -11,10 +11,8 @@ import "./page.css";
 import { apiFetch } from "@/lib/http/api-client";
 import { formatCurrency } from "@/lib/format/format-currency";
 import { formatIsoDate } from "@/lib/format/format-date";
-import {
-  BOOKING_STATUS_LABELS,
-  ROOM_TYPE_LABELS,
-} from "@/modules/bookings/booking.labels";
+import { BOOKING_STATUS_LABELS } from "@/modules/bookings/booking.labels";
+import { ROOM_TYPE_LABELS } from "@/modules/rooms/room.labels";
 import type { BookingListItem } from "@/modules/bookings/booking.types";
 
 function Backoffice() {

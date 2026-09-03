@@ -1,7 +1,4 @@
-import type {
-  BookingStatus,
-  RoomType,
-} from "@/modules/bookings/booking.types";
+import type { BookingStatus } from "@/modules/bookings/booking.types";
 
 /**
  * Traducción de los enums de la base de datos a texto para la UI.
@@ -15,10 +12,4 @@ export const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
   CONFIRMED: "Confirmada",
   CANCELLED: "Cancelada",
   RESCHEDULED: "Reprogramada",
-};
-
-export const ROOM_TYPE_LABELS: Record<RoomType, string> = {
-  SINGLE: "Individual",
-  DOUBLE: "Doble",
-  SUITE: "Suite",
 };
