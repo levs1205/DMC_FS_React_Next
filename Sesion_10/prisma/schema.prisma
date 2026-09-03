@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Tipos de habitación que ofrece el hotel (dominio: TipoHabitacion).
+enum RoomType {
+  SINGLE
+  DOUBLE
+  SUITE
+
+  @@map("room_type")
+}
+
+// Estados del ciclo de vida de una reserva (dominio: EstadoReserva).
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  RESCHEDULED
+
+  @@map("booking_status")
+}
+
+// Rol de la persona que inicia sesión: decide a qué zona de la app entra.
+enum UserRole {
+  STUDENT
+  ADMIN
+
+  @@map("user_role")
+}
+
+// Entidad de la tabla public.user (misma forma que el UserRecord de dominio).
+model User {
+  id       Int      @id @default(autoincrement())
+  name     String?  @db.VarChar
+  login    String?  @db.VarChar
+  password String?  @db.VarChar
+  role     UserRole @default(STUDENT)
+
+  bookings      Booking[]
+  refreshTokens RefreshToken[]
+
+  @@map("user")
+}
+
+// Refresh tokens vivos de cada usuario (sesiones abiertas).
+// Se guarda solo el SHA-256 del token, nunca el token en claro: quien lea la
+// tabla no puede reutilizarlo. Tener la fila permite revocar (logout, robo)
+// algo que un JWT suelto —por ser stateless— no permitiría.
+model RefreshToken {
+  id        Int       @id @default(autoincrement())
+  tokenHash String    @unique @map("token_hash") @db.Char(64)
+  userId    Int       @map("user_id")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([userId])
+  @@map("refresh_token")
+}
+
+// Entidad de la tabla public.room (dominio: Habitacion).
+model Room {
+  id            Int      @id @default(autoincrement())
+  name          String   @db.VarChar(120)
+  type          RoomType
+  capacity      Int
+  pricePerNight Decimal  @map("price_per_night") @db.Decimal(10, 2)
+  description   String
+
+  bookings Booking[]
+
+  @@map("room")
+}
+
+// Entidad de la tabla public.booking (dominio: Reserva).
+model Booking {
+  id         Int           @id @default(autoincrement())
+  roomId     Int           @map("room_id")
+  userId     Int           @map("user_id")
+  startDate  DateTime      @map("start_date") @db.Date
+  endDate    DateTime      @map("end_date") @db.Date
+  status     BookingStatus @default(PENDING)
+  totalPrice Decimal       @map("total_price") @db.Decimal(10, 2)
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([roomId])
+  @@index([userId])
+  @@map("booking")
+}
