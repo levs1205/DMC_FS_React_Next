@@ -21,6 +21,10 @@ export const userRepository = {
     );
 
     return record?.role ?? null;
-  }
+  },
+
+  async findById(id: number): Promise<UserRecord | null> {
+    return prisma.user.findUnique({ where: { id } });
+  },
 
 };

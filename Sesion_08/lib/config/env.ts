@@ -19,3 +19,9 @@ export const dbConfig = {
 };
 
 export const databaseUrl = buildDatabaseUrl(dbConfig);
+
+
+export const authConfig = {
+  accessTokenSecret: getEnvVar("JWT_ACCESS_SECRET"),
+  refresTokenSecret: getEnvVar("JWT_REFRESH_SECRET")
+}

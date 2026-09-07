@@ -14,6 +14,7 @@ import {
   ROOM_TYPE_LABELS,
 } from "@/modules/bookings/booking.labels";
 import type { BookingListItem } from "@/modules/bookings/booking.types";
+import router from "next/router";
 
 function Backoffice() {
   const [bookings, setBookings] = useState<BookingListItem[]>([]);
@@ -34,6 +35,11 @@ function Backoffice() {
         const data = await response.json();
 
         if (!isActive) return;
+
+        if (response.status === 401) {
+          router.push("/login");
+          return;
+        }
 
         if (!response.ok) {
           setError(data.message ?? "No se pudieron cargar las reservas.");

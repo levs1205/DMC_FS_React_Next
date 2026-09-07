@@ -9,22 +9,62 @@ import {
 import { readSessionCookies } from "@/modules/auth/auth.cookies"
 import type { SessionIdentity, SessionUser, UserRole } from "@/modules/auth/auth.types"
 import { userService } from "@/modules/users/user.service"
-
-export const getSession = cache(
-    async(): Promise<SessionIdentity | null> => {
-        const { accessToken } = await readSessionCookies();
-
-        if(!accessToken) return null;
-
-        
-    }
-);
+import { verifyAccessToken } from "@/modules/auth/auth.tokens";
 
 
-// export async function requireRole(
-//     ...roles: readonly UserRole[]
-// ): Promise<SessionUser>{
-//     const session = await getSessionUser
+export const getSession = cache(async (): Promise<SessionIdentity | null> => {
+  const { accessToken } = await readSessionCookies();
+
+  if (!accessToken) return null;
+
+  return verifyAccessToken(accessToken);
+});
 
 
-// }
+export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
+  const session = await getSession();
+
+  if (!session) return null;
+
+  const role = await userService.findRoleById(session.id);
+
+  if (!role) return null;
+
+  return { ...session, role };
+});
+
+
+export async function requireRole(
+  ...roles: readonly UserRole[]
+): Promise<SessionUser> {
+  const session = await getSessionUser();
+
+  if (!session) {
+    redirect(LOGIN_PATH);
+  }
+
+  // A quien tiene sesión pero rol equivocado se lo manda a su propia zona.
+  if (!roles.includes(session.role)) {
+    redirect(homePathForRole(session.role));
+  }
+
+  return session;
+}
+
+export async function requireApiSession(
+  ...roles: readonly UserRole[]
+): Promise<SessionUser> {
+  // El rol sale de la base (por el id del usuario logueado), no del token:
+  // si a alguien le cambian los permisos, la próxima llamada ya lo refleja.
+  const session = await getSessionUser();
+
+  if (!session) {
+    throw new ApiError(401, "Necesitas iniciar sesión.");
+  }
+
+  if (roles.length > 0 && !roles.includes(session.role)) {
+    throw new ApiError(403, "No tienes permiso para esta operación.");
+  }
+
+  return session;
+}

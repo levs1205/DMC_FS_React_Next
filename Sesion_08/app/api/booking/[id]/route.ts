@@ -3,7 +3,7 @@ import { ApiError } from "@/lib/http/api-error";
 import { handleRouteError } from "@/lib/http/handle-route-error";
 import { bookingService } from "@/modules/bookings/booking.service";
 import type { UpdateBookingStatusInput } from "@/modules/bookings/booking.types";
-
+import { requireApiSession } from "@/modules/auth/auth.sessions";
 /**
  * PATCH /api/booking/[id]
  * Body: { "status": "CANCELLED" }
@@ -16,6 +16,7 @@ export async function PATCH(
   context: RouteContext<"/api/booking/[id]">
 ) {
   try {
+    await requireApiSession("ADMIN");
     const { id } = await context.params;
 
     let body: Partial<UpdateBookingStatusInput>;

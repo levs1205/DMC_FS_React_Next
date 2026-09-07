@@ -20,5 +20,5 @@ export interface SessionUser extends SessionIdentity{
 export interface SessionToken {
     accessToken: string,
     refreshToken: string,
-    refreshTokenExpireAt: Date
+    refreshTokenExpiresAt: Date
 }

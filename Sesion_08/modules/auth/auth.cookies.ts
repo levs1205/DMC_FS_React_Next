@@ -27,7 +27,7 @@ import {
     response.cookies.set(REFRESH_TOKEN_COOKIE, tokens.refreshToken, {
         ...baseCookieOptions,
         sameSite: "strict",
-        expires: tokens.refreshTokenExpireAt
+        expires: tokens.refreshTokenExpiresAt
     });
 
     return response;

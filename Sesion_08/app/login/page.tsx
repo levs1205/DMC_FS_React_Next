@@ -36,7 +36,9 @@ function Login() {
         return;
       }
 
-      router.push("/backoffice");
+      router.push(data.redirectTo);
+
+      router.refresh();
     } catch {
       setError("No se pudo conectar con el servidor.");
     } finally {
