@@ -3,6 +3,9 @@
  * Envuelve TODAS las páginas del proyecto (comparte <html>/<body>, fuentes, etc.).
  * Se renderiza como Server Component y no se vuelve a montar entre navegaciones,
  * por eso su estado se preserva al cambiar de ruta.
+ *
+ * Es además la raíz del SEO: acá se define la metadata POR DEFECTO que heredan
+ * todas las rutas. Cada página después sobreescribe solo lo suyo.
  */
 import type { Metadata, Viewport } from "next";
 import Image from "next/image";
@@ -90,6 +93,8 @@ export const metadata: Metadata = {
   },
 };
 
+// `themeColor` ya no va en `metadata`: desde Next 14 vive en el export
+// `viewport` (es la barra del navegador en móvil, no una etiqueta de SEO).
 export const viewport: Viewport = {
   themeColor: "#111827",
 };

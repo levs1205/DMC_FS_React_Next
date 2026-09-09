@@ -1,8 +1,23 @@
+/**
+ * Ruta: "/" (portada pública)
+ *
+ * Server Component: el HTML sale ya armado desde el servidor, que es la
+ * condición para que un buscador lo lea. Si esta página fuera un Client
+ * Component con los datos cargados por `useEffect`, el crawler recibiría un
+ * <div> vacío.
+ *
+ * Ejemplo de SEO nº 1: metadata estática + JSON-LD del sitio.
+ */
 import type { Metadata } from "next";
 import Link from "next/link";
 import { JsonLd } from "@/lib/seo/json-ld";
 import { absoluteUrl, siteConfig } from "@/lib/seo/site.config";
 
+/**
+ * Metadata estática: se exporta un objeto `Metadata` y Next arma las
+ * etiquetas del <head>. Se usa cuando el contenido no depende de datos
+ * (para lo dinámico está `generateMetadata`, ver /habitaciones/[slug]).
+ */
 export const metadata: Metadata = {
   // `title.absolute` ignora el template del layout: la portada no debería
   // titularse "Hotel DMC | Hotel DMC".
@@ -23,8 +38,6 @@ export const metadata: Metadata = {
     description: siteConfig.description,
   },
 };
-
-
 
 export default function Home() {
   /**

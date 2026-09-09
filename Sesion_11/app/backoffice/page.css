@@ -1,0 +1,200 @@
+.backoffice {
+  width: 100%;
+  max-width: 1040px;
+  margin: 2.5rem auto;
+  padding: 0 1.5rem;
+}
+
+.backoffice__header {
+  margin-bottom: 1.25rem;
+}
+
+.backoffice__title {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.backoffice__subtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.backoffice__status {
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.backoffice__status--error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.backoffice__status--ok {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.backoffice__table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.backoffice__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.backoffice__table th,
+.backoffice__table td {
+  padding: 0.7rem 0.9rem;
+  text-align: left;
+  border-bottom: 1px solid #f1f2f4;
+  white-space: nowrap;
+}
+
+.backoffice__table th {
+  background: #fafafe;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #6b7280;
+}
+
+.backoffice__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.backoffice__cell--right {
+  text-align: right;
+}
+
+.backoffice__room {
+  display: block;
+  font-weight: 600;
+}
+
+.backoffice__room-type {
+  display: block;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.backoffice__badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.backoffice__badge--pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.backoffice__badge--confirmed {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.backoffice__badge--cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.backoffice__badge--rescheduled {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.backoffice__cancel {
+  padding: 0.35rem 0.85rem;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  background: #fff;
+  color: #b91c1c;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.backoffice__cancel:not(:disabled):hover {
+  background: #fee2e2;
+}
+
+.backoffice__cancel:disabled {
+  border-color: #e5e7eb;
+  color: #c7c7d1;
+  cursor: not-allowed;
+}
+
+/* --- Dialog de confirmación -------------------------------------------- */
+
+.backoffice-dialog {
+  width: min(420px, calc(100vw - 2rem));
+  border: 1px solid #d9d9e3;
+  border-radius: 10px;
+  padding: 1.5rem;
+  background: #fafafe;
+  color: #1f2937;
+}
+
+.backoffice-dialog::backdrop {
+  background: rgb(15 23 42 / 0.45);
+}
+
+.backoffice-dialog__title {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+}
+
+.backoffice-dialog__text {
+  margin: 0 0 1.25rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #374151;
+}
+
+.backoffice-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.backoffice-dialog__button {
+  padding: 0.5rem 1.1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.backoffice-dialog__button:not(:disabled):hover {
+  background: #f3f4f6;
+}
+
+.backoffice-dialog__button--danger {
+  border-color: transparent;
+  background: #dc2626;
+  color: #fff;
+}
+
+.backoffice-dialog__button--danger:not(:disabled):hover {
+  background: #b91c1c;
+}
+
+.backoffice-dialog__button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

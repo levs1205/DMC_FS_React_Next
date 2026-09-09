@@ -1,0 +1,86 @@
+.hotel {
+  width: 100%;
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 3rem;
+}
+
+.hotel__header {
+  margin-bottom: 2rem;
+}
+
+.hotel__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+
+.hotel__lead {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.65;
+}
+
+.hotel__section {
+  margin-bottom: 2rem;
+}
+
+.hotel__section h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.hotel__address {
+  margin: 0;
+  font-style: normal;
+  color: #4b5563;
+  line-height: 1.8;
+}
+
+.hotel__amenities {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: #4b5563;
+  line-height: 1.8;
+}
+
+.hotel__faq {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.hotel__faq summary {
+  cursor: pointer;
+}
+
+.hotel__faq summary h3 {
+  display: inline;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.hotel__faq p {
+  margin: 0.6rem 0 0;
+  color: #4b5563;
+  line-height: 1.65;
+}
+
+.hotel__actions {
+  margin: 2rem 0 0;
+}
+
+.hotel__cta {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  background: #111827;
+  color: #ffffff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.hotel__cta:hover {
+  background: #1f2937;
+}
