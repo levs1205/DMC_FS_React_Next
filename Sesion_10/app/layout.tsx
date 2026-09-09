@@ -61,11 +61,18 @@ export const metadata: Metadata = {
     locale: siteConfig.locale,
   },
 
-  // X/Twitter reutiliza el Open Graph; solo hace falta declarar el formato.
+  /**
+   * X/Twitter reutiliza el Open Graph: si no encuentra `twitter:title` ni
+   * `twitter:description`, cae en `og:title` y `og:description`. Por eso acá
+   * solo se declara el FORMATO de la tarjeta.
+   *
+   * Repetir el título del sitio acá sería un bug silencioso: la metadata se
+   * hereda campo por campo, así que un `twitter:title` fijo en la raíz pisa
+   * al de cada página (que solo define `openGraph`) y todas las habitaciones
+   * terminarían compartiendo el mismo título genérico en X.
+   */
   twitter: {
     card: "summary_large_image",
-    title: siteConfig.title,
-    description: siteConfig.description,
   },
 
   /**

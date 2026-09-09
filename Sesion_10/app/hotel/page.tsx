@@ -49,6 +49,15 @@ export const metadata: Metadata = {
     title: `${PAGE_TITLE} | ${siteConfig.name}`,
     description: PAGE_DESCRIPTION,
     url: "/hotel",
+    /**
+     * `openGraph` se REEMPLAZA entero, no se fusiona: al declararlo acá, esta
+     * página deja de heredar el bloque del layout raíz y con él la imagen que
+     * genera `app/opengraph-image.tsx`. Sin este `images` la página se
+     * comparte sin miniatura. (X/Twitter cae en `og:image` por su cuenta.)
+     */
+    images: [
+      { url: "/opengraph-image", width: 1200, height: 630, alt: siteConfig.name },
+    ],
   },
 };
 
