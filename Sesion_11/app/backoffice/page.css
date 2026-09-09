@@ -99,12 +99,14 @@
   color: #92400e;
 }
 
-.backoffice__badge--confirmed {
+.backoffice__badge--confirmed,
+.backoffice__badge--paid {
   background: #dcfce7;
   color: #166534;
 }
 
-.backoffice__badge--cancelled {
+.backoffice__badge--cancelled,
+.backoffice__badge--payment_failed {
   background: #fee2e2;
   color: #991b1b;
 }

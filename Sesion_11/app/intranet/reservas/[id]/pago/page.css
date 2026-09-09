@@ -1,0 +1,140 @@
+.pay-booking {
+  width: 100%;
+  max-width: 34rem;
+  margin: 2.5rem auto;
+  padding: 0 1.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.pay-booking__header {
+  text-align: center;
+}
+
+.pay-booking__title {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.pay-booking__subtitle {
+  margin: 0.4rem auto 0;
+  max-width: 30rem;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: #6b7280;
+}
+
+.pay-booking__summary {
+  padding: 1.35rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.pay-booking__room h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.pay-booking__room p {
+  margin: 0.2rem 0 1rem;
+  font-size: 0.78rem;
+  color: #9ca3af;
+}
+
+.pay-booking__specs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.85rem 1rem;
+  margin: 0 0 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f1f2f4;
+}
+
+.pay-booking__specs dt {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #9ca3af;
+}
+
+.pay-booking__specs dd {
+  margin: 0.15rem 0 0;
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.pay-booking__calc {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.pay-booking__total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.pay-booking__total strong {
+  font-size: 1.4rem;
+}
+
+.pay-booking__quotation {
+  margin: 1rem 0 0;
+  padding-top: 0.85rem;
+  border-top: 1px solid #f1f2f4;
+  font-size: 0.72rem;
+  color: #9ca3af;
+}
+
+.pay-booking__quotation code {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  word-break: break-all;
+}
+
+.pay-booking__status {
+  margin: 0;
+  padding: 0.65rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
+}
+
+.pay-booking__status--error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.pay-booking__submit {
+  width: 100%;
+  padding: 0.8rem 1.35rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: #009ee3; /* el celeste de Mercado Pago */
+  color: #fff;
+  font: inherit;
+  font-size: 0.98rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pay-booking__submit:not(:disabled):hover {
+  background: #0084bf;
+}
+
+.pay-booking__submit:disabled {
+  background: #d1d5db;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.pay-booking__back {
+  align-self: center;
+  font-size: 0.85rem;
+  color: #4b5563;
+}

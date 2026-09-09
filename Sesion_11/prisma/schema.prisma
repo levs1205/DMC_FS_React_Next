@@ -17,13 +17,33 @@ enum RoomType {
 }
 
 // Estados del ciclo de vida de una reserva (dominio: EstadoReserva).
+//
+// PAID y PAYMENT_FAILED los escribe el modulo de pagos: la reserva nace
+// PENDING y solo el cobro confirmado en Mercado Pago la mueve a PAID.
 enum BookingStatus {
   PENDING
   CONFIRMED
   CANCELLED
   RESCHEDULED
+  PAID
+  PAYMENT_FAILED
 
   @@map("booking_status")
+}
+
+// Estados del intento de cobro, calcados de los que devuelve Mercado Pago.
+// Se guardan aparte del estado de la reserva porque responden preguntas
+// distintas: "en que anda el cobro" no es lo mismo que "que pasa con la
+// habitacion" (un pago rechazado no borra la reserva, habilita reintentar).
+enum PaymentStatus {
+  PENDING
+  IN_PROCESS
+  APPROVED
+  REJECTED
+  CANCELLED
+  REFUNDED
+
+  @@map("payment_status")
 }
 
 // Rol de la persona que inicia sesión: decide a qué zona de la app entra.
@@ -90,10 +110,45 @@ model Booking {
   status     BookingStatus @default(PENDING)
   totalPrice Decimal       @map("total_price") @db.Decimal(10, 2)
 
-  room Room @relation(fields: [roomId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  room     Room      @relation(fields: [roomId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  payments Payment[]
 
   @@index([roomId])
   @@index([userId])
+  // Consulta del listado del alumno: "mis reservas, las mas nuevas arriba".
+  @@index([userId, startDate])
   @@map("booking")
+}
+
+// Intento de cobro de una reserva contra Mercado Pago (dominio: Pago).
+//
+// `quotationId` es LA pieza central del disenio: un UUID que generamos
+// nosotros antes de hablar con Mercado Pago y que viaja en tres lugares a la
+// vez —como `X-Idempotency-Key` de la creacion de la preferencia, como
+// `external_reference` del pago y como parte de la URL de retorno—. Gracias a
+// eso el flujo es idempotente de punta a punta: reintentar el mismo checkout
+// no crea una segunda preferencia, y el webhook puede llegar dos veces (o
+// desordenado) sin cobrar ni marcar nada dos veces.
+model Payment {
+  id                Int           @id @default(autoincrement())
+  quotationId       String        @unique @map("quotation_id") @db.Uuid
+  bookingId         Int           @map("booking_id")
+  status            PaymentStatus @default(PENDING)
+  amount            Decimal       @map("amount") @db.Decimal(10, 2)
+  currency          String        @default("PEN") @db.VarChar(3)
+  // Datos que devuelve Mercado Pago: la preferencia (el "pedido") y, cuando
+  // el comprador ya pago, el id y el detalle del pago concreto.
+  preferenceId      String?       @map("preference_id") @db.VarChar(64)
+  initPoint         String?       @map("init_point")
+  providerPaymentId String?       @map("provider_payment_id") @db.VarChar(64)
+  statusDetail      String?       @map("status_detail") @db.VarChar(120)
+  paidAt            DateTime?     @map("paid_at") @db.Timestamptz(3)
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([bookingId])
+  @@map("payment")
 }

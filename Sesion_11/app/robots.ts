@@ -22,7 +22,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api/", "/backoffice", "/intranet", "/login"],
+      disallow: ["/api/", "/backoffice", "/intranet", "/login", "/pago"],
     },
     sitemap: `${siteConfig.url}/sitemap.xml`,
     host: siteConfig.url,

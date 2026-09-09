@@ -1,7 +1,12 @@
 import { cache } from "react";
 import { buildSlug, parseIdFromSlug } from "@/lib/seo/slug";
+import { bookingRepository } from "@/modules/bookings/booking.repository";
+import { validateStay } from "@/modules/bookings/booking.service";
 import { roomRepository, type RoomRecord } from "@/modules/rooms/room.repository";
-import type { RoomListItem } from "@/modules/rooms/room.types";
+import type {
+  RoomAvailabilityItem,
+  RoomListItem,
+} from "@/modules/rooms/room.types";
 
 function toRoomListItem(record: RoomRecord): RoomListItem {
   return {
@@ -45,3 +50,39 @@ export const findRoomBySlug = cache(
     return record ? toRoomListItem(record) : null;
   }
 );
+
+/**
+ * Catálogo con la disponibilidad calculada para un rango de fechas.
+ *
+ * Son dos consultas y no una por habitación: se traen todas las habitaciones
+ * y, aparte, los ids de las que están ocupadas en ese rango. Con seis
+ * habitaciones da igual, con seiscientas es la diferencia entre 2 consultas y
+ * 601.
+ *
+ * El total por habitación se calcula acá, del lado del servidor: es el mismo
+ * número que después va a viajar a Mercado Pago, así que no puede depender de
+ * lo que diga el navegador.
+ */
+export async function listRoomsWithAvailability(
+  startDate: string,
+  endDate: string
+): Promise<RoomAvailabilityItem[]> {
+  const nights = validateStay(startDate, endDate);
+
+  const [rooms, bookedRoomIds] = await Promise.all([
+    listRooms(),
+    bookingRepository.findBookedRoomIds(
+      new Date(`${startDate}T00:00:00.000Z`),
+      new Date(`${endDate}T00:00:00.000Z`)
+    ),
+  ]);
+
+  const booked = new Set(bookedRoomIds);
+
+  return rooms.map((room) => ({
+    ...room,
+    available: !booked.has(room.id),
+    nights,
+    totalPrice: Number((room.pricePerNight * nights).toFixed(2)),
+  }));
+}

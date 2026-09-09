@@ -22,3 +22,16 @@ export interface RoomListItem {
   pricePerNight: number;
   description: string;
 }
+
+/**
+ * La habitación más su disponibilidad para un rango concreto, con el total
+ * que costaría esa estadía. Lo consume el formulario de nueva reserva.
+ *
+ * El total lo calcula el servidor —nunca el navegador— porque es el mismo
+ * número que después se le va a cobrar al alumno.
+ */
+export interface RoomAvailabilityItem extends RoomListItem {
+  available: boolean;
+  nights: number;
+  totalPrice: number;
+}

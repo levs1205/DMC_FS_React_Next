@@ -231,6 +231,32 @@ body {
   color: #4b5563;
 }
 
+.intranet__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  margin: 0.75rem 0 0;
+}
+
+.intranet__cta {
+  padding: 0.65rem 1.35rem;
+  border-radius: 8px;
+  background: #111827;
+  color: #ffffff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.intranet__cta:hover {
+  background: #1f2937;
+}
+
+.intranet__link {
+  color: #4b5563;
+}
+
 .site-nav {
   margin-right: auto;
   margin-left: 1.5rem;
