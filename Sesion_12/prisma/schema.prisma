@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Tipos de habitación que ofrece el hotel (dominio: TipoHabitacion).
+enum RoomType {
+  SINGLE
+  DOUBLE
+  SUITE
+
+  @@map("room_type")
+}
+
+// Estados del ciclo de vida de una reserva (dominio: EstadoReserva).
+//
+// PAID y PAYMENT_FAILED los escribe el modulo de pagos: la reserva nace
+// PENDING y solo el cobro confirmado en Mercado Pago la mueve a PAID.
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  RESCHEDULED
+  PAID
+  PAYMENT_FAILED
+
+  @@map("booking_status")
+}
+
+// Estados del intento de cobro, calcados de los que devuelve Mercado Pago.
+// Se guardan aparte del estado de la reserva porque responden preguntas
+// distintas: "en que anda el cobro" no es lo mismo que "que pasa con la
+// habitacion" (un pago rechazado no borra la reserva, habilita reintentar).
+enum PaymentStatus {
+  PENDING
+  IN_PROCESS
+  APPROVED
+  REJECTED
+  CANCELLED
+  REFUNDED
+
+  @@map("payment_status")
+}
+
+// Rol de la persona que inicia sesión: decide a qué zona de la app entra.
+enum UserRole {
+  STUDENT
+  ADMIN
+
+  @@map("user_role")
+}
+
+// Entidad de la tabla public.user (misma forma que el UserRecord de dominio).
+model User {
+  id       Int      @id @default(autoincrement())
+  name     String?  @db.VarChar
+  login    String?  @db.VarChar
+  password String?  @db.VarChar
+  role     UserRole @default(STUDENT)
+
+  bookings      Booking[]
+  refreshTokens RefreshToken[]
+
+  @@map("user")
+}
+
+// Refresh tokens vivos de cada usuario (sesiones abiertas).
+// Se guarda solo el SHA-256 del token, nunca el token en claro: quien lea la
+// tabla no puede reutilizarlo. Tener la fila permite revocar (logout, robo)
+// algo que un JWT suelto —por ser stateless— no permitiría.
+model RefreshToken {
+  id        Int       @id @default(autoincrement())
+  tokenHash String    @unique @map("token_hash") @db.Char(64)
+  userId    Int       @map("user_id")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([userId])
+  @@map("refresh_token")
+}
+
+// Entidad de la tabla public.room (dominio: Habitacion).
+model Room {
+  id            Int      @id @default(autoincrement())
+  name          String   @db.VarChar(120)
+  type          RoomType
+  capacity      Int
+  pricePerNight Decimal  @map("price_per_night") @db.Decimal(10, 2)
+  description   String
+
+  bookings Booking[]
+
+  @@map("room")
+}
+
+// Entidad de la tabla public.booking (dominio: Reserva).
+model Booking {
+  id         Int           @id @default(autoincrement())
+  roomId     Int           @map("room_id")
+  userId     Int           @map("user_id")
+  startDate  DateTime      @map("start_date") @db.Date
+  endDate    DateTime      @map("end_date") @db.Date
+  status     BookingStatus @default(PENDING)
+  totalPrice Decimal       @map("total_price") @db.Decimal(10, 2)
+
+  room     Room      @relation(fields: [roomId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  payments Payment[]
+
+  @@index([roomId])
+  @@index([userId])
+  // Consulta del listado del alumno: "mis reservas, las mas nuevas arriba".
+  @@index([userId, startDate])
+  @@map("booking")
+}
+
+// Intento de cobro de una reserva contra Mercado Pago (dominio: Pago).
+//
+// `quotationId` es LA pieza central del disenio: un UUID que generamos
+// nosotros antes de hablar con Mercado Pago y que viaja en tres lugares a la
+// vez —como `X-Idempotency-Key` de la creacion de la preferencia, como
+// `external_reference` del pago y como parte de la URL de retorno—. Gracias a
+// eso el flujo es idempotente de punta a punta: reintentar el mismo checkout
+// no crea una segunda preferencia, y el webhook puede llegar dos veces (o
+// desordenado) sin cobrar ni marcar nada dos veces.
+model Payment {
+  id                Int           @id @default(autoincrement())
+  quotationId       String        @unique @map("quotation_id") @db.Uuid
+  bookingId         Int           @map("booking_id")
+  status            PaymentStatus @default(PENDING)
+  amount            Decimal       @map("amount") @db.Decimal(10, 2)
+  currency          String        @default("PEN") @db.VarChar(3)
+  // Datos que devuelve Mercado Pago: la preferencia (el "pedido") y, cuando
+  // el comprador ya pago, el id y el detalle del pago concreto.
+  preferenceId      String?       @map("preference_id") @db.VarChar(64)
+  initPoint         String?       @map("init_point")
+  providerPaymentId String?       @map("provider_payment_id") @db.VarChar(64)
+  statusDetail      String?       @map("status_detail") @db.VarChar(120)
+  paidAt            DateTime?     @map("paid_at") @db.Timestamptz(3)
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([bookingId])
+  @@map("payment")
+}
