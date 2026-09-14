@@ -12,4 +12,6 @@ export const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
   CONFIRMED: "Confirmada",
   CANCELLED: "Cancelada",
   RESCHEDULED: "Reprogramada",
+  PAID: "Pagada",
+  PAYMENT_FAILED: "Pago incorrecto",
 };

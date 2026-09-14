@@ -22,3 +22,10 @@ export interface RoomListItem {
   pricePerNight: number;
   description: string;
 }
+
+
+export interface RoomAvailabilityItem extends RoomListItem {
+  available: boolean;
+  nights: number;
+  totalPrice: number;
+}
