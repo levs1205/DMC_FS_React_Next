@@ -1,0 +1,92 @@
+.rooms {
+  width: 100%;
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 3rem;
+}
+
+.rooms__header {
+  margin-bottom: 2rem;
+}
+
+.rooms__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+
+.rooms__intro {
+  margin: 0;
+  max-width: 48rem;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.rooms__empty {
+  color: #6b7280;
+}
+
+.rooms__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.room-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1.25rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.room-card__name {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.room-card__name a {
+  color: #111827;
+  text-decoration: none;
+}
+
+.room-card__name a:hover {
+  text-decoration: underline;
+}
+
+.room-card__specs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin: 0;
+}
+
+.room-card__specs dt {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+}
+
+.room-card__specs dd {
+  margin: 0.15rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.room-card__price {
+  color: #047857;
+}
+
+.room-card__description {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.6;
+}
