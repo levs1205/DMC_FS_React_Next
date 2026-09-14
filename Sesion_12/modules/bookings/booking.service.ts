@@ -10,6 +10,7 @@ import {
 } from "@/modules/bookings/booking.dates";
 import {
   bookingRepository,
+  type BookingCore,
   type BookingWithRelations,
 } from "@/modules/bookings/booking.repository";
 import type {
@@ -34,7 +35,9 @@ function isBookingStatus(value: unknown): value is BookingStatus {
   return BOOKING_STATUSES.includes(value as BookingStatus);
 }
 
-function toBookingListItem(record: BookingWithRelations): BookingListItem {
+// Se exporta para que el módulo de analítica devuelva reservas con la MISMA
+// forma que el resto de la API, sin volver a mapear las columnas a mano.
+export function toBookingListItem(record: BookingCore): BookingListItem {
   const startDate = toIsoDate(record.startDate);
   const endDate = toIsoDate(record.endDate);
 
