@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ApiError } from "@/lib/http/api-error";
-import { handleRouteError } from "@/lib/http/handle-route-error";
+import { withApiRoute } from "@/lib/http/with-api-route";
 import { requireApiSession } from "@/modules/auth/auth.session";
 import { listRoomsWithAvailability } from "@/modules/rooms/room.service";
 
@@ -14,8 +14,9 @@ import { listRoomsWithAvailability } from "@/modules/rooms/room.service";
  * consulta sin efectos: se puede compartir el enlace, volver atrás y refrescar
  * sin consecuencias.
  */
-export async function GET(request: NextRequest) {
-  try {
+export const GET = withApiRoute(
+  "/api/room/availability",
+  async (request: NextRequest) => {
     await requireApiSession("STUDENT");
 
     const { searchParams } = request.nextUrl;
@@ -32,7 +33,5 @@ export async function GET(request: NextRequest) {
     const rooms = await listRoomsWithAvailability(startDate, endDate);
 
     return NextResponse.json(rooms);
-  } catch (error) {
-    return handleRouteError(error);
   }
-}
+);

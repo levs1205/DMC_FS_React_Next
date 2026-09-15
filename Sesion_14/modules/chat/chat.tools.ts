@@ -3,6 +3,7 @@ import "server-only";
 import { Type, type FunctionDeclaration, type Schema } from "@google/genai";
 import { BookingStatus, RoomType } from "@/lib/generated/prisma/enums";
 import { validateStrict } from "@/lib/http/validate-query";
+import { logger } from "@/lib/observability/logger";
 import {
   MAX_PAGE_SIZE,
   MAX_TOP,
@@ -33,6 +34,8 @@ import {
  */
 
 const STATUS_VALUES = Object.values(BookingStatus).join(", ");
+
+const chatLogger = logger.child({ module: "chat" });
 const ROOM_TYPE_VALUES = Object.values(RoomType).join(", ");
 
 /**
@@ -199,7 +202,11 @@ export async function runTool(
 
   // Rastro de auditoría: qué consultó el agente y con qué filtros. Es lo que
   // permite reconstruir después de dónde salió un número raro.
-  console.info(`[chat] herramienta ${name}`, JSON.stringify(args));
+  //
+  // Los `args` sí se registran aquí, al contrario que en la capa de base de
+  // datos: son los filtros que ELIGIÓ el modelo, y son justamente la evidencia
+  // que hace falta para auditar una respuesta equivocada.
+  chatLogger.info("herramienta invocada", { tool: name, args });
 
   try {
     switch (name) {
@@ -242,7 +249,10 @@ export async function runTool(
   } catch (error) {
     // El detalle técnico queda en el log del servidor; al modelo se le manda
     // solo el mensaje, que es el que le sirve para corregirse.
-    console.error(`[chat] falló la herramienta ${name}`, error);
+    chatLogger.error("falló una herramienta del asistente", {
+      tool: name,
+      err: error instanceof Error ? error : new Error(String(error)),
+    });
 
     return {
       error:

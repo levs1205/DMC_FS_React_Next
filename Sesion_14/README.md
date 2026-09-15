@@ -1,36 +1,107 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Reservas — Next.js 16 + Prisma + Postgres
 
-## Getting Started
+Proyecto educativo: sistema de reservas de hotel con autenticación por JWT,
+cobros con Mercado Pago, un asistente conversacional sobre los datos y
+observabilidad completa (logs, métricas y trazas).
 
-First, run the development server:
+## Puesta en marcha
 
 ```bash
+npm install
+cp .env.example .env.local     # y rellena los valores
+npm run db:migrate             # aplica las migraciones al Postgres local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre <http://localhost:3000>.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`.env.example` documenta cada variable: qué es, si es obligatoria y cómo
+generarla.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+| Comando | Qué hace |
+| --- | --- |
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Build de producción |
+| `npm run start` | Sirve el build |
+| `npm run lint` | ESLint (ya no corre dentro de `build` en Next 16) |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run check:all` | typecheck + lint + build. Lo mismo que valida el despliegue |
+| `npm run db:migrate` | Crea y aplica una migración (desarrollo) |
+| `npm run db:migrate:deploy` | Aplica migraciones existentes (servidores) |
+| `npm run db:studio` | Explorador visual de la base |
+| `npm run db:verify` | Ensayo general: aplica las migraciones y el seed sobre una base vacía desechable y comprueba que reproducen `schema.prisma` |
+| `npm run db:hash -- "clave"` | Genera el hash de una contraseña y el `UPDATE` para aplicarlo |
+| `npm run deploy` | Despliega esta carpeta a una URL de **preview** |
+| `npm run deploy:prod` | Despliega a **producción** |
+| `npm run env:pull` | Baja las variables de Vercel a `.env.local` |
 
-To learn more about Next.js, take a look at the following resources:
+## Desplegar
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Desde esta carpeta, sin pasar por GitHub:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npx vercel login       # solo la primera vez
+npx vercel link        # solo la primera vez
+npm run deploy         # preview: URL desechable
+npm run deploy:prod    # producción
+```
 
-## Deploy on Vercel
+El detalle completo —base de datos, variables por entorno, migraciones,
+dominio, webhooks y rollback— está en
+**[docs/DESPLIEGUE.md](docs/DESPLIEGUE.md)**.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Estructura
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+app/            rutas, páginas y route handlers
+  api/          endpoints REST (+ /api/health y /api/metrics)
+modules/        lógica de negocio, por dominio: auth, bookings, rooms,
+                payments, analytics, chat, users
+lib/
+  config/       configuración de entorno validada
+  db/           cliente de Prisma, instrumentado
+  http/         envoltorios y utilidades de los route handlers
+  observability/ logger, métricas, trazas, contexto de request
+  seo/          metadatos y datos estructurados
+prisma/         esquema, migraciones y seed
+docs/           guías de despliegue y observabilidad
+proxy.ts        control de acceso antes de cada navegación
+instrumentation.ts  arranque de OpenTelemetry
+```
+
+Cada capa tiene una responsabilidad: los route handlers validan y responden,
+los servicios deciden, los repositorios consultan. La base de datos solo se toca
+desde un repositorio.
+
+## Endpoints de diagnóstico
+
+```bash
+curl http://localhost:3000/api/health     # ¿viva? ¿llega a Postgres?
+curl http://localhost:3000/api/metrics    # métricas en formato Prometheus
+```
+
+Cada respuesta de la API lleva `x-request-id` y `Server-Timing`, y cada error
+devuelve ese mismo id en el cuerpo. Es la llave para encontrar un incidente
+concreto entre todos los logs.
+
+## Documentación
+
+- **[docs/DESPLIEGUE.md](docs/DESPLIEGUE.md)** — desplegar en Vercel con Neon
+  Postgres desde la terminal, paso a paso: entornos, variables, migraciones,
+  dominio, webhooks, rollback y checklist. Incluye el flujo alternativo por
+  GitHub.
+- **[docs/OBSERVABILIDAD.md](docs/OBSERVABILIDAD.md)** — cómo están montados los
+  logs, las métricas y las trazas, cómo leerlos cuando algo falla y cómo
+  instrumentar código nuevo.
+
+## Notas de la versión de Next
+
+Este proyecto usa **Next.js 16**, que trae cambios respecto a lo que suele
+encontrarse en tutoriales:
+
+- El *middleware* se llama ahora **proxy** (`proxy.ts`) y corre en el runtime de
+  Node por defecto.
+- ESLint ya no se ejecuta dentro de `next build`: es un paso aparte.
+- La documentación de la versión exacta está en `node_modules/next/dist/docs/`.

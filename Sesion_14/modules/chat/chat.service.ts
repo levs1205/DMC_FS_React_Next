@@ -7,6 +7,7 @@ import type {
   Part,
 } from "@google/genai";
 import { todayIsoDate } from "@/modules/bookings/booking.dates";
+import { logger } from "@/lib/observability/logger";
 import {
   MAX_HISTORY_MESSAGES,
   MAX_TOOL_TURNS,
@@ -30,6 +31,8 @@ import {
   sanitizeText,
 } from "@/modules/chat/chat.sanitize";
 import type { ChatEvent, ChatMessage } from "@/modules/chat/chat.types";
+
+const chatLogger = logger.child({ module: "chat" });
 
 /**
  * El bucle del agente.
@@ -139,10 +142,11 @@ async function openModelStream(
 
       const wait = suggested ?? RETRY_DELAYS_MS[attempt];
 
-      console.warn(
-        `[chat] reintento ${attempt + 1} en ${wait}ms tras un error del proveedor`,
-        error
-      );
+      chatLogger.warn("reintento tras un error del proveedor", {
+        attempt: attempt + 1,
+        waitMs: wait,
+        err: error instanceof Error ? error : new Error(String(error)),
+      });
 
       await new Promise((resolve) => setTimeout(resolve, wait));
     }
@@ -271,7 +275,10 @@ export async function* streamChatReply(
 
     // El detalle crudo del proveedor queda en el log; a la pantalla va un
     // mensaje que diga qué hacer.
-    console.error("[chat] falló la llamada al modelo", error);
+    chatLogger.error("falló la llamada al modelo", {
+      model: getGeminiModel(),
+      err: error instanceof Error ? error : new Error(String(error)),
+    });
 
     throw new Error(describeModelError(error, getGeminiModel()));
   }

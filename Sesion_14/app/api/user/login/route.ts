@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ApiError } from "@/lib/http/api-error";
-import { handleRouteError } from "@/lib/http/handle-route-error";
 import { validateBody } from "@/lib/http/validate-body";
+import { withApiRoute } from "@/lib/http/with-api-route";
+import { enrichRequestContext } from "@/lib/observability/request-context";
 import { homePathForRole } from "@/modules/auth/auth.config";
 import { applySessionCookies } from "@/modules/auth/auth.cookies";
 import { authService } from "@/modules/auth/auth.service";
@@ -14,8 +15,9 @@ import { loginSchema } from "@/modules/users/user.schemas";
  * Responde con el usuario y la ruta que le toca según su rol. Los tokens no
  * aparecen en el cuerpo: se adjuntan como cookies HttpOnly.
  */
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withApiRoute(
+  "/api/user/login",
+  async (request: NextRequest) => {
     let body: unknown;
     try {
       body = await request.json();
@@ -26,13 +28,15 @@ export async function POST(request: NextRequest) {
     const credentials = validateBody(loginSchema, body);
     const { user, tokens } = await authService.login(credentials);
 
+    // Nunca se registra el login ni la contraseña; sí el id, que identifica sin
+    // exponer datos personales y permite rastrear una sesión sospechosa.
+    enrichRequestContext({ userId: user.id });
+
     const response = NextResponse.json({
       user,
       redirectTo: homePathForRole(user.role),
     });
 
     return applySessionCookies(response, tokens);
-  } catch (error) {
-    return handleRouteError(error);
   }
-}
+);

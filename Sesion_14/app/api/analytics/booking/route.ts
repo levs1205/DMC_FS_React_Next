@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { handleRouteError } from "@/lib/http/handle-route-error";
 import { validateQuery } from "@/lib/http/validate-query";
+import { withApiRoute } from "@/lib/http/with-api-route";
 import { bookingSearchSchema } from "@/modules/analytics/analytics.schemas";
 import { analyticsService } from "@/modules/analytics/analytics.service";
 import { requireApiSession } from "@/modules/auth/auth.session";
@@ -30,8 +30,9 @@ import { requireApiSession } from "@/modules/auth/auth.session";
  * guardia. Cuando el chatbot llame a este endpoint lo va a hacer con la sesión
  * del administrador que está conversando, nunca con una llave propia.
  */
-export async function GET(request: NextRequest) {
-  try {
+export const GET = withApiRoute(
+  "/api/analytics/booking",
+  async (request: NextRequest) => {
     await requireApiSession("ADMIN");
 
     const query = validateQuery(
@@ -41,7 +42,5 @@ export async function GET(request: NextRequest) {
     const result = await analyticsService.searchBookings(query);
 
     return NextResponse.json(result);
-  } catch (error) {
-    return handleRouteError(error);
   }
-}
+);

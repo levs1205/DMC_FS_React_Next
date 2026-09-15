@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { handleRouteError } from "@/lib/http/handle-route-error";
 import { validateQuery } from "@/lib/http/validate-query";
+import { withApiRoute } from "@/lib/http/with-api-route";
 import { studentSearchSchema } from "@/modules/analytics/analytics.schemas";
 import { analyticsService } from "@/modules/analytics/analytics.service";
 import { requireApiSession } from "@/modules/auth/auth.session";
@@ -19,8 +19,9 @@ import { requireApiSession } from "@/modules/auth/auth.session";
  * Devuelve id, nombre y usuario. Nada más: la contraseña ni siquiera sale de
  * la base de datos.
  */
-export async function GET(request: NextRequest) {
-  try {
+export const GET = withApiRoute(
+  "/api/analytics/student",
+  async (request: NextRequest) => {
     await requireApiSession("ADMIN");
 
     const query = validateQuery(
@@ -30,7 +31,5 @@ export async function GET(request: NextRequest) {
     const students = await analyticsService.searchStudents(query);
 
     return NextResponse.json(students);
-  } catch (error) {
-    return handleRouteError(error);
   }
-}
+);

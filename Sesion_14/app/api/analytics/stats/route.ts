@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { handleRouteError } from "@/lib/http/handle-route-error";
 import { validateQuery } from "@/lib/http/validate-query";
+import { withApiRoute } from "@/lib/http/with-api-route";
 import { bookingStatsSchema } from "@/modules/analytics/analytics.schemas";
 import { analyticsService } from "@/modules/analytics/analytics.service";
 import { requireApiSession } from "@/modules/auth/auth.session";
@@ -24,8 +24,9 @@ import { requireApiSession } from "@/modules/auth/auth.session";
  * pagar. Para hablar de ingresos reales hay que pedir `status=PAID`; el
  * desglose `byStatus` está justamente para poder distinguirlo.
  */
-export async function GET(request: NextRequest) {
-  try {
+export const GET = withApiRoute(
+  "/api/analytics/stats",
+  async (request: NextRequest) => {
     await requireApiSession("ADMIN");
 
     const query = validateQuery(
@@ -35,7 +36,5 @@ export async function GET(request: NextRequest) {
     const stats = await analyticsService.getBookingStats(query);
 
     return NextResponse.json(stats);
-  } catch (error) {
-    return handleRouteError(error);
   }
-}
+);

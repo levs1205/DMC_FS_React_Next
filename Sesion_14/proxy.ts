@@ -29,6 +29,53 @@ import { verifyAccessToken } from "@/modules/auth/auth.tokens";
  * 2. Sin sesión en una zona privada → al login.
  * 3. Con sesión en /login → a la portada (de ahí cada zona se encarga).
  */
+/**
+ * Identificador del request, creado en el borde y propagado hacia dentro.
+ *
+ * Es la pieza que cose toda la observabilidad: el mismo id aparece en el log
+ * del proxy, en el del route handler, en cada consulta a la base y en la
+ * cabecera `x-request-id` que recibe el navegador. Cuando alguien reporta un
+ * fallo y trae ese id, se reconstruye el recorrido completo.
+ *
+ * Se reutiliza el de Vercel (`x-vercel-id`) cuando existe, para poder cruzar
+ * nuestros logs con los de la plataforma en lugar de tener dos numeraciones
+ * paralelas del mismo request.
+ *
+ * `NextResponse.next({ request: { headers } })` es la forma —y la única— de que
+ * una cabecera añadida aquí llegue al handler de destino: modificar
+ * `request.headers` a secas no viaja.
+ *
+ * Nota importante: este archivo NO corre sobre `/api` (ver el matcher al final),
+ * y eso es deliberado. El webhook de Mercado Pago usa su propio `x-request-id`
+ * como parte del manifiesto que firma con HMAC; pisarlo invalidaría la firma de
+ * todas las notificaciones de pago.
+ */
+function withRequestId(response: NextResponse, request: NextRequest): NextResponse {
+  const requestId =
+    request.headers.get("x-request-id") ??
+    request.headers.get("x-vercel-id") ??
+    crypto.randomUUID();
+
+  response.headers.set("x-request-id", requestId);
+
+  return response;
+}
+
+function forward(request: NextRequest): NextResponse {
+  const requestId =
+    request.headers.get("x-request-id") ??
+    request.headers.get("x-vercel-id") ??
+    crypto.randomUUID();
+
+  const headers = new Headers(request.headers);
+  headers.set("x-request-id", requestId);
+
+  const response = NextResponse.next({ request: { headers } });
+  response.headers.set("x-request-id", requestId);
+
+  return response;
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
@@ -47,21 +94,27 @@ export async function proxy(request: NextRequest) {
       const refreshUrl = new URL(REFRESH_PATH, request.nextUrl);
       refreshUrl.searchParams.set("next", `${pathname}${search}`);
 
-      return NextResponse.redirect(refreshUrl);
+      return withRequestId(NextResponse.redirect(refreshUrl), request);
     }
 
     if (rule) {
-      return NextResponse.redirect(new URL(LOGIN_PATH, request.nextUrl));
+      return withRequestId(
+        NextResponse.redirect(new URL(LOGIN_PATH, request.nextUrl)),
+        request
+      );
     }
 
-    return NextResponse.next();
+    return forward(request);
   }
 
   if (isLoginPage) {
-    return NextResponse.redirect(new URL(HOME_PATH, request.nextUrl));
+    return withRequestId(
+      NextResponse.redirect(new URL(HOME_PATH, request.nextUrl)),
+      request
+    );
   }
 
-  return NextResponse.next();
+  return forward(request);
 }
 
 // No corre sobre /api (cada route handler se protege solo), ni sobre los

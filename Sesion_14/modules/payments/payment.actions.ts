@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { ApiError } from "@/lib/http/api-error";
+import { logger } from "@/lib/observability/logger";
 import { requireRole } from "@/modules/auth/auth.session";
 import { paymentService } from "@/modules/payments/payment.service";
 
@@ -34,7 +35,15 @@ export async function startCheckoutAction(bookingId: string): Promise<void> {
         ? error.message
         : "No se pudo iniciar el pago. Intentá nuevamente en unos minutos.";
 
-    if (!(error instanceof ApiError)) console.error(error);
+    // Un `ApiError` es una decisión de negocio que ya viaja al usuario en la
+    // URL; solo lo inesperado merece una línea de error en el log.
+    if (!(error instanceof ApiError)) {
+      logger.error("falló la Server Action de pago", {
+        module: "pagos",
+        bookingId,
+        err: error instanceof Error ? error : new Error(String(error)),
+      });
+    }
 
     // El error vuelve a la misma pantalla por la URL: así se puede mostrar sin
     // convertir la página en un Client Component solo para guardar un estado.

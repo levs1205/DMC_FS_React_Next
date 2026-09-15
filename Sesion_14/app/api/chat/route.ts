@@ -1,7 +1,9 @@
 import type { NextRequest } from "next/server";
 import { ApiError } from "@/lib/http/api-error";
-import { handleRouteError } from "@/lib/http/handle-route-error";
 import { validateBody } from "@/lib/http/validate-body";
+import { withApiRoute } from "@/lib/http/with-api-route";
+import { logger } from "@/lib/observability/logger";
+import { enrichRequestContext } from "@/lib/observability/request-context";
 import { requireApiSession } from "@/modules/auth/auth.session";
 import { assertChatRateLimit } from "@/modules/chat/chat.rate-limit";
 import { chatRequestSchema } from "@/modules/chat/chat.schemas";
@@ -24,101 +26,103 @@ import type { ChatEvent } from "@/modules/chat/chat.types";
  *
  * Solo ADMIN: el asistente puede leer las reservas de todos los alumnos.
  */
-export async function POST(request: NextRequest) {
+export const POST = withApiRoute("/api/chat", async (request: NextRequest) => {
+  const session = await requireApiSession("ADMIN");
+
+  enrichRequestContext({ userId: session.id });
+
+  // Antes de leer el cuerpo: si ya gastó el cupo, no tiene sentido ni
+  // parsear el JSON.
+  assertChatRateLimit(session.id);
+
+  let body: unknown;
   try {
-    const session = await requireApiSession("ADMIN");
+    body = await request.json();
+  } catch {
+    throw new ApiError(400, "El cuerpo de la solicitud debe ser JSON válido.");
+  }
 
-    // Antes de leer el cuerpo: si ya gastó el cupo, no tiene sentido ni
-    // parsear el JSON.
-    assertChatRateLimit(session.id);
+  const input = validateBody(chatRequestSchema, body);
 
-    let body: unknown;
-    try {
-      body = await request.json();
-    } catch {
-      throw new ApiError(400, "El cuerpo de la solicitud debe ser JSON válido.");
-    }
+  const events = streamChatReply({
+    message: input.message,
+    history: input.history,
+    adminName: session.name,
+    // Si la persona cierra la pestaña o corta la respuesta, se abandona
+    // también la llamada al modelo en vez de seguir gastando tokens.
+    signal: request.signal,
+  });
 
-    const input = validateBody(chatRequestSchema, body);
+  const encoder = new TextEncoder();
 
-    const events = streamChatReply({
-      message: input.message,
-      history: input.history,
-      adminName: session.name,
-      // Si la persona cierra la pestaña o corta la respuesta, se abandona
-      // también la llamada al modelo en vez de seguir gastando tokens.
-      signal: request.signal,
-    });
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      let isOpen = true;
 
-    const encoder = new TextEncoder();
-
-    const stream = new ReadableStream<Uint8Array>({
-      async start(controller) {
-        let isOpen = true;
-
-        const send = (event: ChatEvent) => {
-          if (!isOpen) return;
-
-          try {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
-          } catch {
-            // El navegador cortó: dejamos de escribir y salimos ordenados.
-            isOpen = false;
-          }
-        };
+      const send = (event: ChatEvent) => {
+        if (!isOpen) return;
 
         try {
-          for await (const event of events) send(event);
-          send({ type: "done" });
-        } catch (error) {
-          // Momento clave: los headers ya salieron, así que acá NO se puede
-          // devolver un 500. El error tiene que viajar como un evento más y
-          // que la pantalla lo muestre dentro de la conversación.
-          if (!request.signal.aborted) {
-            console.error("[chat] error durante el stream", error);
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+        } catch {
+          // El navegador cortó: dejamos de escribir y salimos ordenados.
+          isOpen = false;
+        }
+      };
 
-            send({
-              type: "error",
-              // El detalle se muestra tal cual porque este endpoint es solo
-              // para ADMIN y casi siempre dice qué configurar (por ejemplo,
-              // que falta GEMINI_API_KEY).
-              message:
-                error instanceof Error
-                  ? error.message
-                  : "El asistente no pudo responder.",
-            });
-          }
-        } finally {
-          if (isOpen) {
-            try {
-              controller.close();
-            } catch {
-              // Ya estaba cerrado por el lado del cliente.
-            }
+      try {
+        for await (const event of events) send(event);
+        send({ type: "done" });
+      } catch (error) {
+        // Momento clave: los headers ya salieron, así que acá NO se puede
+        // devolver un 500. El error tiene que viajar como un evento más y
+        // que la pantalla lo muestre dentro de la conversación.
+        if (!request.signal.aborted) {
+          logger.error("error durante el stream del chat", {
+            err: error instanceof Error ? error : new Error(String(error)),
+          });
+
+          send({
+            type: "error",
+            // El detalle se muestra tal cual porque este endpoint es solo
+            // para ADMIN y casi siempre dice qué configurar (por ejemplo,
+            // que falta GEMINI_API_KEY).
+            message:
+              error instanceof Error
+                ? error.message
+                : "El asistente no pudo responder.",
+          });
+        }
+      } finally {
+        if (isOpen) {
+          try {
+            controller.close();
+          } catch {
+            // Ya estaba cerrado por el lado del cliente.
           }
         }
-      },
+      }
+    },
 
-      // El navegador abandonó el stream: se corta el generador para que no
-      // siga pidiéndole cosas al modelo.
-      cancel() {
-        void events.return(undefined);
-      },
-    });
+    // El navegador abandonó el stream: se corta el generador para que no
+    // siga pidiéndole cosas al modelo.
+    cancel() {
+      void events.return(undefined);
+    },
+  });
 
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/event-stream; charset=utf-8",
-        // Sin esto, un proxy intermedio puede juntar todo y entregarlo de
-        // golpe al final, que es exactamente lo contrario de un stream.
-        "Cache-Control": "no-cache, no-transform",
-        "X-Accel-Buffering": "no",
-        Connection: "keep-alive",
-      },
-    });
-  } catch (error) {
-    // Errores de ANTES del stream (sesión, cuerpo inválido): acá sí se puede
-    // responder con el código de estado que corresponde.
-    return handleRouteError(error);
-  }
-}
+  // Ojo con lo que mide `withApiRoute` en esta ruta: el tiempo hasta que se
+  // DEVUELVE el stream, no hasta que termina de escribirse. Es correcto —es la
+  // latencia hasta el primer byte, que es lo que percibe el usuario— pero no
+  // hay que leerlo como "lo que tardó el modelo en responder".
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      // Sin esto, un proxy intermedio puede juntar todo y entregarlo de
+      // golpe al final, que es exactamente lo contrario de un stream.
+      "Cache-Control": "no-cache, no-transform",
+      "X-Accel-Buffering": "no",
+      Connection: "keep-alive",
+    },
+  });
+});

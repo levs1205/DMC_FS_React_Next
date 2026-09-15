@@ -2,12 +2,46 @@
 -- Data de prueba para el módulo de reservas.
 -- Ejecutar con:  npx prisma db execute --file prisma/seed.sql
 -- ============================================================================
--- Es idempotente: limpia "booking" y "room" antes de insertar, así se puede
--- correr las veces que haga falta. La tabla "user" NO se toca.
+-- Es idempotente: se puede correr las veces que haga falta.
+--
+--   - "booking", "room" y "payment" se vacían y se vuelven a llenar.
+--   - "user" NO se vacía: los usuarios solo se insertan si no existen ya, así
+--     ejecutar esto contra una base con gente de verdad no le borra la cuenta
+--     a nadie ni le cambia la contraseña.
 
 BEGIN;
 
-TRUNCATE TABLE "booking", "room" RESTART IDENTITY CASCADE;
+-- CASCADE arrastra "payment", que referencia a "booking". Se nombra explícito
+-- para que quede claro que también se vacía.
+TRUNCATE TABLE "payment", "booking", "room" RESTART IDENTITY CASCADE;
+
+-- ---------------------------------------------------------------------------
+-- Usuarios
+-- ---------------------------------------------------------------------------
+-- Sin esto, una base RECIÉN CREADA se queda sin ninguna cuenta y no se puede
+-- ni entrar; y los INSERT de reservas de más abajo —que buscan el usuario por
+-- su login— fallarían al no encontrar a nadie.
+--
+-- Las contraseñas van con HASH, nunca en claro: el valor es lo que produce
+-- modules/auth/auth.password.ts (scrypt con sal por fila). Los de aquí abajo
+-- corresponden a '1234' y 'admin123', y se pueden escribir en el repositorio
+-- porque son credenciales de demostración públicas.
+--
+-- Para generar el hash de otra contraseña:
+--   node scripts/hash-password.mjs "la contraseña"
+--
+-- `ON CONFLICT DO NOTHING` sobre el índice único de "login" es lo que lo hace
+-- repetible: si la cuenta ya existe, no se toca —ni el nombre, ni el rol, ni la
+-- contraseña, que a estas alturas puede ser una que se cambió a mano—.
+INSERT INTO "user" ("name", "login", "password", "role")
+VALUES
+  ('Estudiante Dmc', 'estudiante@dmc.pe',
+   'scrypt$16384$8$1$kf/aTC6AxrU3tLx2B/x9Nw==$NHhy0XTbXV7TERe5naO+p5//Yrwh6AQ2tO92T/FRFl5a+0BGsbZQ+b5vlC8dGqrKs+0LajEHtKZ+QDMle2390Q==',
+   'STUDENT'),
+  ('Admin Demo', 'admin@dmc.pe',
+   'scrypt$16384$8$1$KAahtFYF7snudbTWcTRraw==$Ocj3srRJFJTRZZelExllMwElaQ7ekD/DQCD2gIWkqknC3QHPCLcDwFlxGt3jjbZb7I8uF1d80tnRrnbnmYl2Vw==',
+   'ADMIN')
+ON CONFLICT ("login") DO NOTHING;
 
 -- ---------------------------------------------------------------------------
 -- Habitaciones
@@ -61,3 +95,22 @@ VALUES
    '2026-12-24', '2026-12-26', 'CONFIRMED',   420.00);
 
 COMMIT;
+
+-- ============================================================================
+-- ANTES DE ABRIR ESTO A NADIE MÁS QUE A TI
+-- ============================================================================
+-- Estas credenciales son de demostración: '1234' y 'admin123' están escritas en
+-- la documentación y cualquiera que lea el repositorio las conoce. Que estén
+-- con hash protege la base si se filtra, pero no sirve de nada si la contraseña
+-- en sí es pública.
+--
+-- Para cambiarlas en un despliegue real:
+--
+--   node scripts/hash-password.mjs "la nueva contraseña"
+--   UPDATE "user" SET "password" = '<el hash que imprime>'
+--    WHERE "login" = 'admin@dmc.pe';
+--
+-- NO se puede hacer `UPDATE ... SET password = 'texto plano'`: la aplicación
+-- solo acepta valores con formato de hash, así que esa cuenta se quedaría sin
+-- poder entrar.
+-- ============================================================================

@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ApiError } from "@/lib/http/api-error";
-import { handleRouteError } from "@/lib/http/handle-route-error";
 import { validateBody } from "@/lib/http/validate-body";
+import { withApiRoute } from "@/lib/http/with-api-route";
+import { enrichRequestContext } from "@/lib/observability/request-context";
 import { requireApiSession } from "@/modules/auth/auth.session";
 import { createBookingSchema } from "@/modules/bookings/booking.schemas";
 import { bookingService } from "@/modules/bookings/booking.service";
@@ -9,16 +10,12 @@ import { bookingService } from "@/modules/bookings/booking.service";
 // GET /api/booking → listado completo de reservas para el backoffice.
 // Solo ADMIN: el proxy ya filtra la navegación, pero la API se protege igual
 // porque es la que realmente entrega los datos.
-export async function GET() {
-  try {
-    await requireApiSession("ADMIN");
+export const GET = withApiRoute("/api/booking", async () => {
+  await requireApiSession("ADMIN");
 
-    const bookings = await bookingService.listBookings();
-    return NextResponse.json(bookings);
-  } catch (error) {
-    return handleRouteError(error);
-  }
-}
+  const bookings = await bookingService.listBookings();
+  return NextResponse.json(bookings);
+});
 
 /**
  * POST /api/booking
@@ -28,9 +25,14 @@ export async function GET() {
  * precio se aceptan del cliente: el primero sale de la sesión y el segundo se
  * calcula con el precio vigente de la habitación.
  */
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withApiRoute(
+  "/api/booking",
+  async (request: NextRequest) => {
     const session = await requireApiSession("STUDENT");
+
+    // El id del usuario se suma al contexto del request: a partir de aquí toda
+    // línea de log lo lleva, también las que emite el repositorio.
+    enrichRequestContext({ userId: session.id });
 
     let body: unknown;
     try {
@@ -47,7 +49,5 @@ export async function POST(request: NextRequest) {
       status: 201,
       headers: { Location: `/intranet/reservas/${booking.id}/pago` },
     });
-  } catch (error) {
-    return handleRouteError(error);
   }
-}
+);

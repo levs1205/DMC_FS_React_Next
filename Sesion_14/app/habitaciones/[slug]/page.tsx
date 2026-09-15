@@ -22,18 +22,43 @@ import {
   ROOM_TYPE_AMENITIES,
   ROOM_TYPE_LABELS,
 } from "@/modules/rooms/room.labels";
-import { findRoomBySlug, listRooms } from "@/modules/rooms/room.service";
+import { findRoomBySlug } from "@/modules/rooms/room.service";
 
 /**
- * Lista de slugs conocidos en tiempo de build. Next genera el HTML de cada
- * uno una sola vez; una habitación nueva se renderiza on-demand la primera
- * vez que alguien (o el crawler) la pide.
+ * Esta ruta se renderiza EN CADA PETICIÓN, no se prerenderiza.
+ *
+ * Aquí había un `generateStaticParams` que pedía a Next generar el HTML de
+ * cada habitación una sola vez, en el build. Es lo que uno querría para una
+ * página de catálogo —contenido que casi nunca cambia y que interesa que el
+ * crawler reciba ya hecho— pero en esta aplicación es imposible, y conviene
+ * entender por qué:
+ *
+ * El layout raíz (`app/layout.tsx`) llama a `getSessionUser()`, que lee la
+ * cookie de sesión para mostrar en la cabecera quién está conectado. Leer una
+ * cookie es una **API de request**: su valor depende de QUIÉN pide la página.
+ * Eso vuelve dinámica toda la rama que cuelga de ese layout, que es el sitio
+ * entero.
+ *
+ * Si además se declara `generateStaticParams`, se le está pidiendo a Next dos
+ * cosas incompatibles: "genera este HTML una vez, sin ningún usuario" y "lee
+ * la cookie del usuario". El render estático falla con el digest
+ * `DYNAMIC_SERVER_USAGE` y la página responde 500.
+ *
+ * El síntoma es traicionero porque **depende de los datos**: si en el build
+ * hay habitaciones, Next prerenderiza esas rutas y el error aparece solo al
+ * pedir una habitación nueva; si la base está vacía en el build —que es lo que
+ * pasa en el PRIMER despliegue, antes del seed— falla la primera visita a
+ * cualquiera de ellas.
+ *
+ * Perder el prerenderizado no perjudica al SEO: el crawler sigue recibiendo
+ * HTML completo, generado en el servidor. Lo que se pierde es poder cachearlo,
+ * y a cambio se gana una cabecera personalizada en todas las páginas.
+ *
+ * Para recuperar el SSG habría que sacar la lectura de sesión del layout raíz
+ * —renderizando la cabecera de usuario aparte— o habilitar PPR, que sirve
+ * justamente para combinar un esqueleto estático con islas dinámicas.
  */
-export async function generateStaticParams() {
-  const rooms = await listRooms();
-
-  return rooms.map((room) => ({ slug: room.slug }));
-}
+export const dynamic = "force-dynamic";
 
 /**
  * Metadata dinámica: depende de datos, así que no puede ser un objeto

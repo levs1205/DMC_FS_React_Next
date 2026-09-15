@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ApiError } from "@/lib/http/api-error";
-import { handleRouteError } from "@/lib/http/handle-route-error";
+import { withApiRoute } from "@/lib/http/with-api-route";
 import { requireApiSession } from "@/modules/auth/auth.session";
 import { bookingService } from "@/modules/bookings/booking.service";
 import type { UpdateBookingStatusInput } from "@/modules/bookings/booking.types";
@@ -12,11 +12,14 @@ import type { UpdateBookingStatusInput } from "@/modules/bookings/booking.types"
  * Se usa PATCH (y no PUT) porque solo se envía el campo que cambia: el resto
  * de la reserva se queda tal cual está en la base de datos.
  */
-export async function PATCH(
-  request: NextRequest,
-  context: RouteContext<"/api/booking/[id]">
-) {
-  try {
+export const PATCH = withApiRoute(
+  // Se registra el PATRÓN de la ruta, no la URL concreta: así las métricas
+  // tienen una serie por endpoint y no una por reserva.
+  "/api/booking/[id]",
+  async (
+    request: NextRequest,
+    context: RouteContext<"/api/booking/[id]">
+  ) => {
     await requireApiSession("ADMIN");
 
     const { id } = await context.params;
@@ -31,7 +34,5 @@ export async function PATCH(
     const booking = await bookingService.updateStatus(id, body.status);
 
     return NextResponse.json(booking);
-  } catch (error) {
-    return handleRouteError(error);
   }
-}
+);

@@ -1,6 +1,9 @@
 import "server-only";
 
 import { ApiError } from "@/lib/http/api-error";
+import { logger } from "@/lib/observability/logger";
+import { metrics } from "@/lib/observability/metrics";
+import { startTimer, withSpan } from "@/lib/observability/tracing";
 import {
   MERCADOPAGO_API_URL,
   getAccessToken,
@@ -38,9 +41,20 @@ export function toMercadoPagoDate(date: Date): string {
   return `${date.toISOString().replace("Z", "")}+00:00`;
 }
 
+const mpLogger = logger.child({ provider: "mercadopago" });
+
 interface RequestOptions {
   method: "GET" | "POST";
   path: string;
+  /**
+   * Nombre estable de la operación, para las métricas y el span.
+   *
+   * Va aparte del `path` a propósito: el path lleva ids
+   * (`/v1/payments/1234567`) y usarlo como etiqueta crearía una serie temporal
+   * por cada pago. `getPayment` es una etiqueta; `/v1/payments/1234567` es una
+   * fuga de cardinalidad.
+   */
+  operation: string;
   body?: unknown;
   /**
    * Clave de idempotencia. Mercado Pago guarda la respuesta de la primera
@@ -50,9 +64,19 @@ interface RequestOptions {
   idempotencyKey?: string;
 }
 
+/**
+ * Toda llamada sale medida y con su propio span.
+ *
+ * Es la instrumentación que más rinde de todo el proyecto: cuando el flujo de
+ * pago va lento, la pregunta es casi siempre "¿somos nosotros o es el
+ * proveedor?", y aquí se responde sin discusión. Un histograma de
+ * `external_call_duration_ms{provider="mercadopago"}` separa un problema propio
+ * de una caída ajena, que son dos incidentes con dueños distintos.
+ */
 async function request<T>({
   method,
   path,
+  operation,
   body,
   idempotencyKey,
 }: RequestOptions): Promise<T> {
@@ -64,44 +88,88 @@ async function request<T>({
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (idempotencyKey) headers["X-Idempotency-Key"] = idempotencyKey;
 
-  let response: Response;
+  return withSpan(
+    `mercadopago ${operation}`,
+    {
+      "http.request.method": method,
+      "peer.service": "mercadopago",
+      "mercadopago.operation": operation,
+    },
+    async (span) => {
+      const elapsed = startTimer();
 
-  try {
-    response = await fetch(`${MERCADOPAGO_API_URL}${path}`, {
-      method,
-      headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
-      // Nunca cachear: son datos de dinero y ademas la llamada lleva el
-      // access token en los headers.
-      cache: "no-store",
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    });
-  } catch (error) {
-    console.error("[mercadopago] fallo de red", { path, error });
-    throw new ApiError(
-      502,
-      "No se pudo contactar con Mercado Pago. Intenta nuevamente en unos segundos."
-    );
-  }
+      const record = (outcome: string, extra?: Record<string, unknown>) => {
+        const durationMs = elapsed();
 
-  const payload = await response.text();
+        span.setAttribute("http.duration_ms", Math.round(durationMs));
 
-  if (!response.ok) {
-    // El detalle crudo va al log del servidor (puede traer datos internos);
-    // al usuario le llega un mensaje generico.
-    console.error("[mercadopago] respuesta con error", {
-      path,
-      status: response.status,
-      payload,
-    });
+        metrics.externalCallsTotal.inc({
+          provider: "mercadopago",
+          operation,
+          outcome,
+        });
+        metrics.externalCallDurationMs.observe(durationMs, {
+          provider: "mercadopago",
+          operation,
+        });
 
-    throw new ApiError(
-      response.status === 404 ? 404 : 502,
-      "Mercado Pago rechazo la operacion. Revisa la configuracion e intenta nuevamente."
-    );
-  }
+        return { operation, outcome, durationMs: Math.round(durationMs), ...extra };
+      };
 
-  return JSON.parse(payload) as T;
+      let response: Response;
+
+      try {
+        response = await fetch(`${MERCADOPAGO_API_URL}${path}`, {
+          method,
+          headers,
+          body: body === undefined ? undefined : JSON.stringify(body),
+          // Nunca cachear: son datos de dinero y ademas la llamada lleva el
+          // access token en los headers.
+          cache: "no-store",
+          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        });
+      } catch (error) {
+        // Se distingue el timeout del resto: son dos problemas distintos. Un
+        // timeout suele ser lentitud del proveedor y se reintenta; un fallo de
+        // red seco puede ser DNS, TLS o salida bloqueada.
+        const timedOut = error instanceof Error && error.name === "TimeoutError";
+
+        mpLogger.error("fallo de red contra Mercado Pago", {
+          ...record(timedOut ? "timeout" : "network_error"),
+          err: error instanceof Error ? error : new Error(String(error)),
+        });
+
+        throw new ApiError(
+          502,
+          "No se pudo contactar con Mercado Pago. Intenta nuevamente en unos segundos."
+        );
+      }
+
+      const payload = await response.text();
+
+      span.setAttribute("http.response.status_code", response.status);
+
+      if (!response.ok) {
+        // El detalle crudo va al log del servidor (puede traer datos internos);
+        // al usuario le llega un mensaje generico.
+        mpLogger.error("Mercado Pago respondió con error", {
+          ...record("http_error", { status: response.status }),
+          // Se recorta: un cuerpo de error puede venir con cientos de líneas y
+          // los logs se cobran por volumen.
+          payload: payload.slice(0, 500),
+        });
+
+        throw new ApiError(
+          response.status === 404 ? 404 : 502,
+          "Mercado Pago rechazo la operacion. Revisa la configuracion e intenta nuevamente."
+        );
+      }
+
+      mpLogger.info("llamada a Mercado Pago", record("ok", { status: response.status }));
+
+      return JSON.parse(payload) as T;
+    }
+  );
 }
 
 export const mercadoPagoClient = {
@@ -113,6 +181,7 @@ export const mercadoPagoClient = {
     return request<PreferenceResponse>({
       method: "POST",
       path: "/checkout/preferences",
+      operation: "createPreference",
       body: preference,
       idempotencyKey,
     });
@@ -123,6 +192,7 @@ export const mercadoPagoClient = {
     return request<MercadoPagoPayment>({
       method: "GET",
       path: `/v1/payments/${encodeURIComponent(paymentId)}`,
+      operation: "getPayment",
     });
   },
 
@@ -146,6 +216,7 @@ export const mercadoPagoClient = {
     const { results } = await request<PaymentSearchResponse>({
       method: "GET",
       path: `/v1/payments/search?${query}`,
+      operation: "searchPayments",
     });
 
     return results[0] ?? null;

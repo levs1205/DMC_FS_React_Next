@@ -58,7 +58,7 @@ enum UserRole {
 model User {
   id       Int      @id @default(autoincrement())
   name     String?  @db.VarChar
-  login    String?  @db.VarChar
+  login    String?  @unique @db.VarChar
   password String?  @db.VarChar
   role     UserRole @default(STUDENT)
 

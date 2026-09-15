@@ -30,8 +30,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files: se ignoran TODOS salvo la plantilla, que es la documentacion
+# de que necesita la app para arrancar y por eso si se versiona.
 .env*
+!.env.example
 
 # prisma generated client
 /lib/generated/prisma
@@ -42,3 +44,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel
+.env*

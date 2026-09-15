@@ -2,6 +2,7 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 import { ApiError } from "@/lib/http/api-error";
+import { logger } from "@/lib/observability/logger";
 import { countNights, toIsoDate } from "@/modules/bookings/booking.dates";
 import { bookingService } from "@/modules/bookings/booking.service";
 import {
@@ -51,6 +52,10 @@ import { userService } from "@/modules/users/user.service";
  */
 
 const MS_PER_MINUTE = 60 * 1000;
+
+// Logger del módulo: todo lo que emita lleva module="pagos", que es lo que
+// permite filtrar el flujo de cobro entero de un vistazo.
+const paymentsLogger = logger.child({ module: "pagos" });
 
 function toCheckoutView(record: PaymentWithBooking): CheckoutView {
   const startDate = toIsoDate(record.booking.startDate);
@@ -116,10 +121,13 @@ async function applyProviderPayment(
    * manipuló en el camino y no se marca nada como pagado.
    */
   if (Number(providerPayment.transaction_amount) !== Number(stored.amount)) {
-    console.error("[pagos] el monto del pago no coincide con la cotización", {
+    // Nivel `error` a propósito aunque la app responda correctamente: esto no
+    // es un fallo técnico, es una señal de fraude o de un bug en el importe, y
+    // es de las pocas líneas de log que merecen una alerta inmediata.
+    paymentsLogger.error("el monto del pago no coincide con la cotización", {
       quotationId: stored.quotationId,
-      esperado: Number(stored.amount),
-      recibido: providerPayment.transaction_amount,
+      expected: Number(stored.amount),
+      received: providerPayment.transaction_amount,
     });
 
     throw new ApiError(409, "El monto del pago no coincide con la reserva.");
@@ -297,9 +305,9 @@ export const paymentService = {
         await applyProviderPayment(stored, providerPayment);
       }
     } catch (error) {
-      console.error("[pagos] no se pudo sincronizar la cotización", {
+      paymentsLogger.error("no se pudo sincronizar la cotización", {
         quotationId,
-        error,
+        err: error instanceof Error ? error : new Error(String(error)),
       });
     }
   },
@@ -316,14 +324,14 @@ export const paymentService = {
     const quotationId = providerPayment.external_reference;
 
     if (!quotationId) {
-      console.warn("[pagos] pago sin external_reference", { providerPaymentId });
+      paymentsLogger.warn("pago sin external_reference", { providerPaymentId });
       return;
     }
 
     const stored = await paymentRepository.findByQuotationId(quotationId);
 
     if (!stored) {
-      console.warn("[pagos] cotización desconocida", { quotationId });
+      paymentsLogger.warn("cotización desconocida", { quotationId });
       return;
     }
 

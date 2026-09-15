@@ -1,15 +1,11 @@
 import { NextResponse } from "next/server";
-import { handleRouteError } from "@/lib/http/handle-route-error";
+import { withApiRoute } from "@/lib/http/with-api-route";
 import { requireApiSession } from "@/modules/auth/auth.session";
 import { userService } from "@/modules/users/user.service";
 
-export async function GET() {
-  try {
-    await requireApiSession("ADMIN");
+export const GET = withApiRoute("/api/user", async () => {
+  await requireApiSession("ADMIN");
 
-    const users = await userService.listUsers();
-    return NextResponse.json(users);
-  } catch (error) {
-    return handleRouteError(error);
-  }
-}
+  const users = await userService.listUsers();
+  return NextResponse.json(users);
+});

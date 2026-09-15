@@ -1,4 +1,8 @@
 import { ApiError } from "@/lib/http/api-error";
+import {
+  fakeVerifyPassword,
+  verifyPassword,
+} from "@/modules/auth/auth.password";
 import type { UserRole } from "@/modules/auth/auth.types";
 import { userRepository } from "@/modules/users/user.repository";
 import type {
@@ -37,9 +41,17 @@ export const userService = {
   },
 
   /**
-   * Comprueba usuario y contraseña. Devuelve siempre el mismo error 401 para
-   * "el usuario no existe" y "la contraseña no coincide": distinguirlos le
-   * permitiría a un atacante averiguar qué correos están registrados.
+   * Comprueba usuario y contraseña.
+   *
+   * Devuelve siempre el mismo error 401 para "el usuario no existe" y "la
+   * contraseña no coincide": distinguirlos le permitiría a un atacante
+   * averiguar qué correos están registrados.
+   *
+   * Y no basta con que el mensaje sea el mismo, también tiene que tardar lo
+   * mismo. Por eso, cuando el usuario no existe, se calcula igualmente un hash
+   * descartable (`fakeVerifyPassword`): sin eso, un correo desconocido
+   * respondería en 2 ms y uno registrado en 100 ms, y esa diferencia se mide
+   * desde fuera sin ninguna dificultad.
    */
   async verifyCredentials({
     user,
@@ -47,7 +59,14 @@ export const userService = {
   }: LoginCredentials): Promise<PublicUser> {
     const record = await userRepository.findByLogin(user);
 
-    if (!record || record.password !== password) {
+    if (!record) {
+      await fakeVerifyPassword(password);
+      throw new ApiError(401, "Usuario o contraseña incorrectos.");
+    }
+
+    // Una fila cuya contraseña siga en texto plano no entra: `verifyPassword`
+    // solo acepta el formato con hash. Falla cerrado a propósito.
+    if (!(await verifyPassword(password, record.password))) {
       throw new ApiError(401, "Usuario o contraseña incorrectos.");
     }
 
