@@ -28,6 +28,7 @@ tier de Neon. Lo único que puede costar es un dominio propio, y es opcional.
 14. [Checklist final](#14-checklist-final)
 15. [Problemas frecuentes](#15-problemas-frecuentes)
 16. [Apéndice: desplegar desde GitHub](#16-apéndice-desplegar-desde-github)
+17. [Apéndice: resetear todo y volver a empezar](#17-apéndice-resetear-todo-y-volver-a-empezar)
 
 ---
 
@@ -674,8 +675,17 @@ Lo que sí bloquea es `prisma migrate dev` en local. Tienes dos salidas:
 
   ```bash
   npx prisma migrate reset     # BORRA la base local y reaplica todo
-  npx prisma db execute --file prisma/seed.sql
+  npx prisma db seed           # el seed configurado en prisma.config.ts
   ```
+
+  `migrate reset` suele lanzar el seed por su cuenta, pero conviene ejecutarlo
+  igualmente: es idempotente, así que repetirlo no hace daño, y una base
+  migrada pero vacía es una base en la que no se puede ni entrar.
+
+  > **Haz copia primero si hay algo que quieras conservar.** `migrate reset`
+  > borra TODOS los datos de forma irreversible, y esa base puede llevar
+  > reservas y pagos creados a mano durante las clases. El seed repone 2
+  > usuarios, 6 habitaciones y 8 reservas; todo lo demás se pierde.
 
   Después de eso tu base local será, por fin, exactamente lo que producen las
   migraciones — la misma base que tendrá producción.
@@ -1133,7 +1143,8 @@ No hay que deshacer nada en el panel: el vínculo es solo un archivo local.
 Bórralo y vuelve a empezar.
 
 ```bash
-rm -rf .vercel          # PowerShell: Remove-Item -Recurse -Force .vercel
+Remove-Item -Recurse -Force .vercel   # PowerShell (Windows)
+rm -rf .vercel                        # bash / zsh (macOS, Linux, Git Bash)
 npx vercel link
 ```
 
@@ -1294,3 +1305,110 @@ cuenta la complicación del monorepo antes de elegirlo.
 
 Las dos formas conviven: puedes tener el repo conectado y aun así hacer un
 `npm run deploy:prod` puntual desde la terminal cuando te haga falta.
+
+---
+
+## 17. Apéndice: resetear todo y volver a empezar
+
+Para repetir el despliegue desde cero —una demo en clase, por ejemplo— hay que
+deshacer la **infraestructura**, no el código. Todo lo que vive en el
+repositorio (migraciones, seed, observabilidad, scripts, esta guía) se queda tal
+cual: es el material con el que se vuelve a desplegar.
+
+### Antes de borrar nada: rescata lo que no puedes regenerar
+
+Si marcaste variables como **Secret**, Vercel no te las devuelve. Y al borrar el
+proyecto se van con él. Anota en tu gestor de contraseñas, antes de seguir:
+
+| Variable | ¿Se puede recuperar? |
+| --- | --- |
+| `MP_ACCESS_TOKEN` | Sí, del panel de Mercado Pago |
+| `MP_WEBHOOK_SECRET` | Sí, del panel de Mercado Pago |
+| `GEMINI_API_KEY` | Sí, de Google AI Studio |
+| `METRICS_TOKEN` | **No** — lo generaste tú. Cópialo o genera otro después |
+| `JWT_*` | No hace falta: se generan nuevos en dos segundos |
+
+Los `JWT_*` son el caso fácil, y por una razón que vale la pena decir en clase:
+un secreto de firma **no es un dato**, es una llave. Perderla no pierde nada;
+solo invalida las sesiones abiertas.
+
+### Los cuatro pasos
+
+El orden importa: Vercel **exige** borrar el recurso antes de desinstalar la
+integración que lo creó.
+
+```bash
+# 1. Borra la base de datos (el recurso de Neon).
+#    El nombre es el que aparece en Storage: p. ej. "neon-celeste-field".
+#    `--disconnect-all` es obligatorio si algún proyecto la sigue usando.
+npx vercel integration-resource remove neon-celeste-field --disconnect-all
+
+# 2. Desinstala la integración de Neon del team.
+#    Solo si quieres que la demo incluya la pantalla "Install Integration".
+npx vercel integration remove neon
+
+# 3. Borra el proyecto de Vercel.
+#    Se lleva consigo los despliegues, las variables y los dominios.
+npx vercel project remove reservas
+
+# 4. Borra el vínculo local.
+Remove-Item -Recurse -Force .vercel   # PowerShell (Windows)
+rm -rf .vercel                        # bash / zsh (macOS, Linux, Git Bash)
+```
+
+Y, solo si quieres demostrar también el `vercel login`:
+
+```bash
+npx vercel logout
+```
+
+> **Si el paso 1 se queja de proyectos conectados:**
+>
+> ```
+> Error: Cannot delete resource neon-celeste-field while it has connected
+> projects. Please disconnect any projects using this resource first or use
+> the `--disconnect-all` flag.
+> ```
+>
+> Es una salvaguarda: Vercel no deja borrar una base que alguien sigue usando.
+> Con `--disconnect-all` la desconecta de todos los proyectos antes de
+> borrarla, que es lo que se quiere aquí. La alternativa quirúrgica, si la
+> base la comparten varios proyectos y solo quieres soltar uno:
+>
+> ```bash
+> npx vercel integration-resource disconnect neon-celeste-field reservas
+> ```
+
+### Qué NO hay que tocar
+
+- **El código.** Nada de lo que hay en el repositorio depende de que el proyecto
+  de Vercel exista.
+- **`.env.local`.** Es tu configuración de desarrollo y no tiene nada que ver
+  con Vercel.
+- **Tu Postgres local**, incluida la base `<DB_NAME>_shadow`, que la usan
+  `prisma migrate dev` y `npm run db:verify`.
+
+### Comprobación antes de la demo
+
+```bash
+npm run check:all     # compila
+npm run db:verify     # la base se construye desde cero
+npm run dev           # y entra con admin@dmc.pe / admin123
+```
+
+Ese último paso es el que más se olvida. Si el login local falla, es que a tu
+base de desarrollo todavía no se le aplicó la migración que convierte las
+contraseñas a hash: ver
+[§ 7, "Si tu base local diverge del historial"](#si-tu-base-local-diverge-del-historial).
+
+Con eso, la demo empieza exactamente en la [sección 4](#4-conectar-la-carpeta-con-vercel).
+
+### Cuánto tarda repetirlo
+
+Unos 15 minutos, no los 30-45 de la primera vez: lo que costó fue decidir, y eso
+ya está decidido. Para una clase en vivo conviene tener preparado de antemano:
+
+- Los valores de Mercado Pago y Gemini en el portapapeles.
+- La región de Neon decidida (`Washington, D.C.`, la de `vercel.json`).
+- Las respuestas de `vercel link`: `Create a new project` → `reservas` →
+  `N` a conectar Git → `N` a personalizar ajustes.

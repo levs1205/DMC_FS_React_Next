@@ -23,11 +23,19 @@ export function toIsoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
+/**
+ * "2026-09-10" → Date en medianoche UTC, sin validar.
+ * Para texto que viene de afuera, usar `parseIsoDate`.
+ */
+export function toUtcDate(isoDate: string): Date {
+  return new Date(`${isoDate}T00:00:00.000Z`);
+}
+
 /** "2026-09-10" → Date en medianoche UTC, o null si no es una fecha real. */
 export function parseIsoDate(value: string): Date | null {
   if (!ISO_DATE_PATTERN.test(value)) return null;
 
-  const date = new Date(`${value}T00:00:00.000Z`);
+  const date = toUtcDate(value);
 
   if (Number.isNaN(date.getTime())) return null;
 
@@ -42,15 +50,20 @@ export function todayIsoDate(): string {
 }
 
 export function addDays(isoDate: string, days: number): string {
-  const base = new Date(`${isoDate}T00:00:00.000Z`).getTime();
+  const base = toUtcDate(isoDate).getTime();
 
   return toIsoDate(new Date(base + days * MS_PER_DAY));
 }
 
 /** Noches entre dos fechas ISO. ("2026-09-10", "2026-09-12") → 2. */
 export function countNights(startIso: string, endIso: string): number {
-  const start = new Date(`${startIso}T00:00:00.000Z`).getTime();
-  const end = new Date(`${endIso}T00:00:00.000Z`).getTime();
+  const start = toUtcDate(startIso).getTime();
+  const end = toUtcDate(endIso).getTime();
 
   return Math.round((end - start) / MS_PER_DAY);
+}
+
+/** Noches entre dos Date de columnas DATE (ambas a medianoche UTC). */
+export function countNightsBetween(start: Date, end: Date): number {
+  return Math.round((end.getTime() - start.getTime()) / MS_PER_DAY);
 }

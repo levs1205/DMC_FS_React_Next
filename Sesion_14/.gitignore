@@ -38,6 +38,10 @@ yarn-error.log*
 # prisma generated client
 /lib/generated/prisma
 
+# copias de seguridad de la base local: llevan datos reales
+# (y, hasta la migracion del hasheo, contrasenas en claro)
+/.backups
+
 # vercel
 .vercel
 

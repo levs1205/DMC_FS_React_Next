@@ -4,11 +4,15 @@ import type { BookingStatus } from "@/lib/generated/prisma/enums";
 import { BLOCKING_BOOKING_STATUSES } from "@/modules/bookings/booking.types";
 
 /**
- * Columnas que necesitan los listados: la reserva, el nombre y el precio de
- * la habitación, el huésped y —para el flujo de pago— el último intento de
- * cobro. Un único SELECT con JOIN, sin consultas extra por fila.
+ * Columnas base de una reserva: la reserva en sí, el nombre y el precio de la
+ * habitación y el huésped. Un único SELECT con JOIN, sin consultas extra por
+ * fila.
+ *
+ * Se exporta porque el módulo de analítica lee las MISMAS columnas —y solo
+ * esas— para alimentar al agente: si mañana se suma un dato a la reserva, hay
+ * un único lugar donde decidir si el agente puede verlo.
  */
-const bookingListSelect = {
+export const bookingCoreSelect = {
   id: true,
   roomId: true,
   userId: true,
@@ -18,6 +22,16 @@ const bookingListSelect = {
   totalPrice: true,
   room: { select: { name: true, type: true, pricePerNight: true } },
   user: { select: { name: true, login: true } },
+} satisfies Prisma.BookingSelect;
+
+export type BookingCore = Prisma.BookingGetPayload<{
+  select: typeof bookingCoreSelect;
+}>;
+
+// Lo anterior más el último intento de cobro, que es lo que necesita el flujo
+// de pago (decidir si se muestra "Pagar" o el detalle del rechazo).
+const bookingListSelect = {
+  ...bookingCoreSelect,
   payments: {
     // El último intento es el que manda: si el primero fue rechazado y el
     // segundo aprobado, la reserva está pagada.

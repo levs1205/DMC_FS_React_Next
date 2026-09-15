@@ -101,6 +101,19 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
+
+    /**
+     * Qué ejecutar para poblar la base después de aplicar las migraciones.
+     *
+     * Lo usa `prisma migrate reset`, que deja la base vacía: sin esto habría
+     * que acordarse de sembrar a mano, y una base migrada pero sin usuarios es
+     * una base en la que no se puede ni entrar. Con esto, `migrate reset` es
+     * una sola orden que deja el entorno de desarrollo listo.
+     *
+     * NO se ejecuta en `migrate deploy`, que es lo que corre en producción: allí
+     * el seed se lanza aparte y una sola vez (ver docs/DESPLIEGUE.md § 10).
+     */
+    seed: "npx prisma db execute --file prisma/seed.sql",
   },
   datasource: {
     url: resolveMigrationUrl(),

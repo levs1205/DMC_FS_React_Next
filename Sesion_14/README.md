@@ -31,6 +31,7 @@ generarla.
 | `npm run db:migrate` | Crea y aplica una migración (desarrollo) |
 | `npm run db:migrate:deploy` | Aplica migraciones existentes (servidores) |
 | `npm run db:studio` | Explorador visual de la base |
+| `npx prisma migrate reset` + `npx prisma db seed` | Reconstruye la base local desde cero. **Borra todos los datos** |
 | `npm run db:verify` | Ensayo general: aplica las migraciones y el seed sobre una base vacía desechable y comprueba que reproducen `schema.prisma` |
 | `npm run db:hash -- "clave"` | Genera el hash de una contraseña y el `UPDATE` para aplicarlo |
 | `npm run deploy` | Despliega esta carpeta a una URL de **preview** |

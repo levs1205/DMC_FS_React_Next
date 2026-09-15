@@ -5,6 +5,7 @@
  */
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import "./page.css";
@@ -124,12 +125,18 @@ function Backoffice() {
   return (
     <section className="backoffice">
       <header className="backoffice__header">
-        <h1 className="backoffice__title">Reservas</h1>
-        <p className="backoffice__subtitle">
-          {isLoading
-            ? "Cargando reservas..."
-            : `${bookings.length} reserva(s) registradas`}
-        </p>
+        <div>
+          <h1 className="backoffice__title">Reservas</h1>
+          <p className="backoffice__subtitle">
+            {isLoading
+              ? "Cargando reservas..."
+              : `${bookings.length} reserva(s) registradas`}
+          </p>
+        </div>
+
+        <Link className="backoffice__link" href="/backoffice/chat">
+          Asistente
+        </Link>
       </header>
 
       {error && (
